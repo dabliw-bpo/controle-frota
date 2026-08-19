@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // conexão via pooler (pgbouncer), usada em runtime
+  directUrl = env("DIRECT_URL") // conexão direta, usada só para migrations
+}
+
+// Enums não são usados de propósito (role/status/tipo ficam como string livre),
+// já que Status/Tipo/Cargo agora são gerenciáveis pelo usuário em /configuracoes
+// (ver src/lib/settings.ts) — um enum do banco exigiria migration a cada alteração.
+
+model Usuario {
+  id           String   @id @default(cuid())
+  nome         String
+  cpf          String   @unique // apenas dígitos, sem máscara
+  senhaHash    String
+  role         String   @default("VISUALIZADOR") // ADMIN | GESTOR | VISUALIZADOR
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Empresa {
+  id        String    @id @default(cuid())
+  nome      String
+  cnpj      String?   @unique
+  veiculos  Veiculo[]
+  createdAt DateTime  @default(now())
+}
+
+model Veiculo {
+  id                String   @id @default(cuid())
+  placa             String   @unique
+  status            String   @default("ATIVO") // ATIVO | EM_ROTA | MANUTENCAO | PARADO | ALUGADO | VENDIDO | APREENDIDO | DEVOLVIDO
+
+  empresaId         String?
+  empresa           Empresa? @relation(fields: [empresaId], references: [id])
+  responsavelTexto  String?  // texto livre quando não há empresa cadastrada
+
+  numeroPatrimonio  String?
+  carroceria        String?  // CAVALO, CARRETA, DOLLY, TANQUE, CARRO, BASCULANTE...
+  fabricacaoAno     String?
+  marcaModeloVersao String?
+  renavam           String?
+  chassi            String?
+  cor               String?
+  valor             Float?
+
+  motorista         String?
+  rastreador        String?
+  antt              String?
+  notaFiscal        String?
+
+  rotaAtual         String?
+  produtoAtual      String?
+  ocorrencias       String?
+  gov               String?  // "OK" quando regularizado junto ao GOV
+  docCnpj           String?
+
+  observacoes       String?
+
+  financiamento     Financiamento?
+  seguro            Seguro?
+  cartoes           CartaoDespesa[]
+  impostos          ImpostoAnual[]
+  venda             Venda?
+  locacao           Locacao?
+  motoristaCadastrado Motorista?
+  faturamentosMensais FaturamentoMensal[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Financiamento {
+  id                     String   @id @default(cuid())
+  veiculoId              String   @unique
+  veiculo                Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+
+  situacao               String?
+  banco                  String?  // ALIENAÇÃO
+  contrato               String?
+  dataOperacao           String?
+  parcelasTotais         Int?
+  parcelasRemanescentes  Int?
+  saldoQuitacao          Float?
+  valor                  Float?
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model Seguro {
+  id         String   @id @default(cuid())
+  veiculoId  String   @unique
+  veiculo    Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+
+  seguradora String?
+  apolice    String?
+  valor      Float?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CartaoDespesa {
+  id            String   @id @default(cuid())
+  veiculoId     String?
+  veiculo       Veiculo? @relation(fields: [veiculoId], references: [id], onDelete: SetNull)
+
+  nomeImpresso  String
+  numeroCartao  String?
+  frotaNumero   String?
+
+  createdAt     DateTime @default(now())
+}
+
+model ImpostoAnual {
+  id                     String   @id @default(cuid())
+  veiculoId              String
+  veiculo                Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+  ano                    Int
+
+  licenciamentoVencimento String?
+  licenciamentoValor      Float?
+  ipvaVencimento          String?
+  multasValor             Float?
+  observacoes             String?
+
+  // pagamentos mensais: { "mar/25": 220.05, "abr/25": 0, ... }
+  pagamentosMensais       String?  // JSON serializado
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([veiculoId, ano])
+}
+
+model ConjuntoInpasa {
+  id                    String  @id @default(cuid())
+  numero                String?
+  cavaloPlaca           String?
+  tanqueDianteiroPlaca  String?
+  tanqueTraseiroPlaca   String?
+  valor                 Float?
+  transportador         String?
+
+  createdAt             DateTime @default(now())
+}
+
+model Venda {
+  id         String   @id @default(cuid())
+  veiculoId  String   @unique
+  veiculo    Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+
+  comprador  String?
+  valor      Float?
+  data       String?
+  observacoes String?
+
+  createdAt  DateTime @default(now())
+}
+
+model Motorista {
+  id         String   @id @default(cuid())
+  nome       String
+  sexo       String?
+  cadastro   String?  // PJ | CLT
+  admissao   String?
+  cpf        String?  @unique
+  cargo      String?
+  email      String?
+  whatsapp   String?
+  pix        String?
+
+  veiculoId  String?  @unique
+  veiculo    Veiculo? @relation(fields: [veiculoId], references: [id], onDelete: SetNull)
+
+  faturamentosMensais FaturamentoMensal[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model FaturamentoMensal {
+  id           String   @id @default(cuid())
+  veiculoId    String
+  veiculo      Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+  motoristaId  String?
+  motorista    Motorista? @relation(fields: [motoristaId], references: [id], onDelete: SetNull)
+
+  ano          Int
+  mes          Int      // 1-12
+
+  lancamentos  FaturamentoLancamento[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([veiculoId, ano, mes])
+}
+
+model FaturamentoLancamento {
+  id                  String            @id @default(cuid())
+  faturamentoMensalId String
+  faturamentoMensal   FaturamentoMensal @relation(fields: [faturamentoMensalId], references: [id], onDelete: Cascade)
+
+  ordem         Int      @default(0)
+  data          String?
+  descricao     String?
+  cte           String?
+  vlrFrete      Float?
+  despesas      Float?
+  abastecimento Float?
+  pedagio       Float?
+  seguro        Float?
+  adm           Float?
+
+  createdAt     DateTime @default(now())
+}
+
+model Configuracao {
+  id          String   @id @default("singleton")
+  nomeSistema String   @default("Controle de Frota")
+  subtitulo   String?
+  updatedAt   DateTime @updatedAt
+}
+
+model StatusVeiculo {
+  id     String @id @default(cuid())
+  chave  String @unique // usado internamente, ex: ATIVO, MANUTENCAO
+  label  String // ex: "Ativo"
+  cor    String @default("gray") // nome de cor usado para gerar as classes do badge
+  ordem  Int    @default(0)
+}
+
+model TipoVeiculo {
+  id    String @id @default(cuid())
+  nome  String @unique // CAVALO, CARRETA, DOLLY, CARRO, TANQUE...
+  ordem Int    @default(0)
+}
+
+model CargoMotorista {
+  id    String @id @default(cuid())
+  nome  String @unique // MOTORISTA, AJUDANTE...
+  ordem Int    @default(0)
+}
+
+model TipoMotorista {
+  id    String @id @default(cuid())
+  nome  String @unique // CLT, PJ...
+  ordem Int    @default(0)
+}
+
+model Locacao {
+  id           String   @id @default(cuid())
+  veiculoId    String   @unique
+  veiculo      Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+
+  locadora     String?
+  situacao     String?  // ALUGADO | DEVOLVIDO
+  valorMensal  Float?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
