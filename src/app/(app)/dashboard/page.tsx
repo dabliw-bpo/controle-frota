@@ -97,13 +97,13 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+        <StatCard label="Valor total (frota)" value={formatCurrency(valorTotalFrota)} colSpan={2} />
         <StatCard label="Total de veículos" value={total.toString()} />
         <StatCard label="Ativos" value={(statusMap.get("ATIVO") ?? 0).toString()} />
         <StatCard label="Em manutenção" value={(statusMap.get("MANUTENCAO") ?? 0).toString()} />
         <StatCard label="Motoristas" value={motoristasCount.toString()} />
         <StatCard label="Veículos leves (carros)" value={veiculosLeves.toString()} />
-        <StatCard label="Valor total (frota)" value={formatCurrency(valorTotalFrota)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -256,11 +256,25 @@ export default async function DashboardPage({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  colSpan,
+}: {
+  label: string;
+  value: string;
+  colSpan?: 2;
+}) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="text-xl font-bold text-slate-900 mt-1 break-words">{value}</p>
+    <div
+      className={`bg-white rounded-xl border border-slate-200 p-4 xl:p-5 min-w-0 ${
+        colSpan === 2 ? "col-span-2" : ""
+      }`}
+    >
+      <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
+      <p className="text-lg xl:text-xl font-bold text-slate-900 mt-1 whitespace-nowrap overflow-x-auto">
+        {value}
+      </p>
     </div>
   );
 }
