@@ -25,7 +25,7 @@ export default async function VeiculoDetalhePage({ params }: { params: { id: str
       impostos: { orderBy: { ano: "desc" } },
       venda: true,
       locacao: true,
-      motoristaCadastrado: true,
+      motoristasCadastrados: true,
     },
   });
 
@@ -82,35 +82,43 @@ export default async function VeiculoDetalhePage({ params }: { params: { id: str
       />
 
       <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <h3 className="font-semibold text-slate-900 mb-4">Motorista cadastrado</h3>
-        {veiculo.motoristaCadastrado ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <Link
-                href={`/motoristas/${veiculo.motoristaCadastrado.id}`}
-                className="font-medium text-brand-600 hover:underline"
-              >
-                {veiculo.motoristaCadastrado.nome}
-              </Link>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {veiculo.motoristaCadastrado.cargo || "—"}
-                {veiculo.motoristaCadastrado.whatsapp ? ` · ${veiculo.motoristaCadastrado.whatsapp}` : ""}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Link
-                href={`/faturamento/${veiculo.id}`}
-                className="text-sm text-white bg-brand-600 hover:bg-brand-700 rounded-lg px-3 py-2"
-              >
-                Lançar faturamento
-              </Link>
-              <Link
-                href={`/motoristas/${veiculo.motoristaCadastrado.id}`}
-                className="text-sm text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2"
-              >
-                Editar vínculo
-              </Link>
-            </div>
+        <h3 className="font-semibold text-slate-900 mb-4">
+          Motoristas cadastrados
+          {veiculo.motoristasCadastrados.length > 1 && (
+            <span className="ml-2 text-xs font-normal text-slate-400">
+              ({veiculo.motoristasCadastrados.length})
+            </span>
+          )}
+        </h3>
+        {veiculo.motoristasCadastrados.length > 0 ? (
+          <div className="space-y-3">
+            {veiculo.motoristasCadastrados.map((m) => (
+              <div key={m.id} className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                <div>
+                  <Link href={`/motoristas/${m.id}`} className="font-medium text-brand-600 hover:underline">
+                    {m.nome}
+                  </Link>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {m.cargo || "—"}
+                    {m.whatsapp ? ` · ${m.whatsapp}` : ""}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/faturamento/${veiculo.id}?motoristaId=${m.id}`}
+                    className="text-sm text-white bg-brand-600 hover:bg-brand-700 rounded-lg px-3 py-2"
+                  >
+                    Lançar faturamento
+                  </Link>
+                  <Link
+                    href={`/motoristas/${m.id}`}
+                    className="text-sm text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2"
+                  >
+                    Editar vínculo
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-sm text-slate-500">

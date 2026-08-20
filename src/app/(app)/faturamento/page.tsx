@@ -96,7 +96,7 @@ export default async function FaturamentoPage({
                 <td className="px-4 py-3 text-right">
                   {m.veiculo && (
                     <Link
-                      href={`/faturamento/${m.veiculo.id}`}
+                      href={`/faturamento/${m.veiculo.id}?motoristaId=${m.id}`}
                       title="Lançar faturamento"
                       aria-label={`Lançar faturamento de ${m.nome}`}
                       className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand-600 hover:bg-brand-700 text-white"

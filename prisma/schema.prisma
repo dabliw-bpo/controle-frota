@@ -69,7 +69,7 @@ model Veiculo {
   impostos          ImpostoAnual[]
   venda             Venda?
   locacao           Locacao?
-  motoristaCadastrado Motorista?
+  motoristasCadastrados Motorista[]
   faturamentosMensais FaturamentoMensal[]
 
   createdAt         DateTime @default(now())
@@ -177,7 +177,7 @@ model Motorista {
   whatsapp   String?
   pix        String?
 
-  veiculoId  String?  @unique
+  veiculoId  String?
   veiculo    Veiculo? @relation(fields: [veiculoId], references: [id], onDelete: SetNull)
 
   faturamentosMensais FaturamentoMensal[]

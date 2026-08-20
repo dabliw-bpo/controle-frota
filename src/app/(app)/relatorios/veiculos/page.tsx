@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, nomesMotoristas } from "@/lib/format";
 import { getStatusList, corParaClasses } from "@/lib/settings";
 import RelatorioAcoes from "@/components/RelatorioAcoes";
 
 export default async function RelatorioVeiculosPage() {
   const [veiculos, statusList] = await Promise.all([
     prisma.veiculo.findMany({
-      include: { empresa: true, motoristaCadastrado: true },
+      include: { empresa: true, motoristasCadastrados: true },
       orderBy: { placa: "asc" },
     }),
     getStatusList(),
@@ -24,7 +24,7 @@ export default async function RelatorioVeiculosPage() {
     v.renavam || "—",
     v.chassi || "—",
     v.empresa?.nome ?? v.responsavelTexto ?? "—",
-    v.motoristaCadastrado?.nome ?? v.motorista ?? "—",
+    nomesMotoristas(v.motoristasCadastrados, v.motorista),
     formatCurrency(v.valor),
   ]);
 
@@ -89,7 +89,7 @@ export default async function RelatorioVeiculosPage() {
                   <td className="px-4 py-2 text-slate-600 whitespace-nowrap">{v.chassi || "—"}</td>
                   <td className="px-4 py-2 text-slate-600">{v.empresa?.nome ?? v.responsavelTexto ?? "—"}</td>
                   <td className="px-4 py-2 text-slate-600 whitespace-nowrap">
-                    {v.motoristaCadastrado?.nome ?? v.motorista ?? "—"}
+                    {nomesMotoristas(v.motoristasCadastrados, v.motorista)}
                   </td>
                   <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">
                     {formatCurrency(v.valor)}

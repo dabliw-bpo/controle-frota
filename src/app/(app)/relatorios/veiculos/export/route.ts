@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getStatusList } from "@/lib/settings";
 import { toCsv, csvResponse } from "@/lib/csv";
+import { nomesMotoristas } from "@/lib/format";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -9,7 +10,7 @@ export async function GET() {
 
   const [veiculos, statusList] = await Promise.all([
     prisma.veiculo.findMany({
-      include: { empresa: true, motoristaCadastrado: true },
+      include: { empresa: true, motoristasCadastrados: true },
       orderBy: { placa: "asc" },
     }),
     getStatusList(),
@@ -27,7 +28,7 @@ export async function GET() {
       v.renavam,
       v.chassi,
       v.empresa?.nome ?? v.responsavelTexto,
-      v.motoristaCadastrado?.nome ?? v.motorista,
+      nomesMotoristas(v.motoristasCadastrados, v.motorista),
       v.valor,
     ])
   );

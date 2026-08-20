@@ -8,6 +8,14 @@ export function formatNumberInput(value?: number | null): string {
   return String(value);
 }
 
+export function nomesMotoristas(
+  motoristas: { nome: string }[],
+  fallback?: string | null
+): string {
+  if (motoristas.length === 0) return fallback ?? "—";
+  return motoristas.map((m) => m.nome).join(", ");
+}
+
 // Lista (sem repetição) das placas realmente usadas nos lançamentos de um
 // faturamento mensal; cai para a placa do veículo quando nenhum lançamento
 // tem placa própria informada (ex: registros antigos).

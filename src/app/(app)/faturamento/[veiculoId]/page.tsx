@@ -27,7 +27,7 @@ export default async function FaturamentoVeiculoPage({
 }) {
   const veiculo = await prisma.veiculo.findUnique({
     where: { id: params.veiculoId },
-    include: { motoristaCadastrado: true },
+    include: { motoristasCadastrados: true },
   });
   if (!veiculo) notFound();
 
@@ -44,7 +44,8 @@ export default async function FaturamentoVeiculoPage({
     ? await prisma.motorista.findUnique({ where: { id: searchParams.motoristaId } })
     : null;
 
-  const motoristaEfetivo = motoristaEscolhido ?? mensal?.motorista ?? veiculo.motoristaCadastrado ?? null;
+  const motoristaEfetivo =
+    motoristaEscolhido ?? mensal?.motorista ?? veiculo.motoristasCadastrados[0] ?? null;
 
   const anoAtual = hoje.getFullYear();
   const anos = Array.from({ length: 5 }, (_, i) => anoAtual + 1 - i);
@@ -90,6 +91,18 @@ export default async function FaturamentoVeiculoPage({
             ))}
           </select>
         </label>
+        {veiculo.motoristasCadastrados.length > 1 && (
+          <label className="text-sm">
+            <span className="block font-medium text-slate-700 mb-1">Motorista</span>
+            <select name="motoristaId" defaultValue={motoristaEfetivo?.id ?? ""} className="input">
+              {veiculo.motoristasCadastrados.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Ver período
         </button>

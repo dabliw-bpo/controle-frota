@@ -51,13 +51,13 @@ export default async function VeiculosPage({
                 { marcaModeloVersao: { contains: q, mode: "insensitive" } },
                 { motorista: { contains: q, mode: "insensitive" } },
                 { responsavelTexto: { contains: q, mode: "insensitive" } },
-                { motoristaCadastrado: { nome: { contains: q, mode: "insensitive" } } },
+                { motoristasCadastrados: { some: { nome: { contains: q, mode: "insensitive" } } } },
               ],
             }
           : {},
       ],
     },
-    include: { empresa: true, motoristaCadastrado: true },
+    include: { empresa: true, motoristasCadastrados: true },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
 
@@ -140,10 +140,17 @@ export default async function VeiculosPage({
                 <td className="px-4 py-3 text-slate-600">{v.chassi || "—"}</td>
                 <td className="px-4 py-3 text-slate-600">{v.empresa?.nome ?? v.responsavelTexto ?? "—"}</td>
                 <td className="px-4 py-3 text-slate-600">
-                  {v.motoristaCadastrado ? (
-                    <Link href={`/motoristas/${v.motoristaCadastrado.id}`} className="text-brand-600 hover:underline">
-                      {v.motoristaCadastrado.nome}
-                    </Link>
+                  {v.motoristasCadastrados.length > 0 ? (
+                    <span className="flex flex-wrap gap-x-1">
+                      {v.motoristasCadastrados.map((m, i) => (
+                        <span key={m.id}>
+                          <Link href={`/motoristas/${m.id}`} className="text-brand-600 hover:underline">
+                            {m.nome}
+                          </Link>
+                          {i < v.motoristasCadastrados.length - 1 && ","}
+                        </span>
+                      ))}
+                    </span>
                   ) : (
                     v.motorista || "—"
                   )}
