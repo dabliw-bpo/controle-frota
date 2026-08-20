@@ -2,7 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { STATUS_VEICULO_OUTRO_MENU } from "@/lib/constants";
 import { formatCurrency } from "@/lib/format";
-import { getStatusList, corParaClasses } from "@/lib/settings";
+import { getStatusList } from "@/lib/settings";
+import PieChart, { PIE_PALETTE, corNomeParaHex } from "@/components/PieChart";
 
 const FROTA_ATIVA_WHERE = { status: { notIn: [...STATUS_VEICULO_OUTRO_MENU] as string[] } };
 
@@ -108,53 +109,39 @@ export default async function DashboardPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <h2 className="font-semibold text-slate-900 mb-4">Veículos por status</h2>
-          <div className="space-y-2">
-            {statusList.map((status) => {
-              const count = statusMap.get(status.chave) ?? 0;
-              if (count === 0) return null;
-              return (
-                <div key={status.chave} className="flex items-center justify-between text-sm">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${corParaClasses(
-                      status.cor
-                    )}`}
-                  >
-                    {status.label}
-                  </span>
-                  <span className="font-medium text-slate-700">{count}</span>
-                </div>
-              );
-            })}
-          </div>
+          <PieChart
+            data={statusList
+              .map((status) => ({
+                label: status.label,
+                value: statusMap.get(status.chave) ?? 0,
+                color: corNomeParaHex(status.cor),
+              }))
+              .filter((d) => d.value > 0)}
+          />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <h2 className="font-semibold text-slate-900 mb-4">Veículos por tipo</h2>
-          <div className="space-y-2">
-            {tipos.map((t) => (
-              <div key={t.carroceria} className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">{t.carroceria}</span>
-                <span className="font-medium text-slate-700">{t._count.carroceria}</span>
-              </div>
-            ))}
-            {tipos.length === 0 && <p className="text-sm text-slate-400">Nenhum registro.</p>}
-          </div>
+          <PieChart
+            data={tipos.map((t, i) => ({
+              label: t.carroceria ?? "—",
+              value: t._count.carroceria,
+              color: PIE_PALETTE[i % PIE_PALETTE.length],
+            }))}
+          />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <h2 className="font-semibold text-slate-900 mb-4">Veículos por empresa</h2>
-          <div className="space-y-2">
-            {porEmpresa
+          <PieChart
+            data={porEmpresa
               .filter((e) => e.empresaId)
-              .map((e) => (
-                <div key={e.empresaId} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600 truncate pr-2">
-                    {empresaMap.get(e.empresaId!) ?? "—"}
-                  </span>
-                  <span className="font-medium text-slate-700">{e._count.empresaId}</span>
-                </div>
-              ))}
-          </div>
+              .map((e, i) => ({
+                label: empresaMap.get(e.empresaId!) ?? "—",
+                value: e._count.empresaId,
+                color: PIE_PALETTE[i % PIE_PALETTE.length],
+              }))}
+          />
         </div>
       </div>
 
