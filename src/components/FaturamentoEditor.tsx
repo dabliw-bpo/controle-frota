@@ -41,12 +41,18 @@ export default function FaturamentoEditor({
   veiculoId,
   ano,
   mes,
+  mesNome,
+  placa,
+  motoristaNome,
   motoristaId,
   lancamentosIniciais,
 }: {
   veiculoId: string;
   ano: number;
   mes: number;
+  mesNome: string;
+  placa: string;
+  motoristaNome: string | null;
   motoristaId: string | null;
   lancamentosIniciais: {
     data: string | null;
@@ -76,6 +82,8 @@ export default function FaturamentoEditor({
   });
   const [isPending, startTransition] = useTransition();
   const [mensagem, setMensagem] = useState("");
+  const [gerandoExcel, setGerandoExcel] = useState(false);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
 
   function atualizarCelula(idx: number, campo: keyof LinhaEditavel, valor: string) {
     setLinhas((prev) => prev.map((l, i) => (i === idx ? { ...l, [campo]: valor } : l)));
@@ -119,6 +127,116 @@ export default function FaturamentoEditor({
       ),
     [calculadas]
   );
+
+  const headersExport = [
+    "Data",
+    "Descrição",
+    "CTE",
+    "Vlr. Frete",
+    "Despesas",
+    "Abastecimento",
+    "Pedágio",
+    "Seguro",
+    "ADM",
+    "Base comissão",
+    "Comissão 12%",
+  ];
+
+  function linhasExport(): (string | number)[][] {
+    return linhas.map((l, idx) => [
+      l.data,
+      l.descricao,
+      l.cte,
+      calculadas[idx].vlrFrete,
+      calculadas[idx].despesas,
+      calculadas[idx].abastecimento,
+      calculadas[idx].pedagio,
+      calculadas[idx].seguro,
+      calculadas[idx].adm,
+      calculadas[idx].base,
+      calculadas[idx].comissao,
+    ]);
+  }
+
+  function tituloExport() {
+    return `Faturamento — ${placa}${motoristaNome ? ` — ${motoristaNome}` : ""} — ${mesNome}/${ano}`;
+  }
+
+  function nomeArquivoExport() {
+    return `faturamento-${placa}-${mes}-${ano}`.toLowerCase();
+  }
+
+  async function handleExportarExcel() {
+    setGerandoExcel(true);
+    try {
+      const XLSX = await import("xlsx");
+      const rows = [headersExport, ...linhasExport(), [
+        `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
+        "",
+        "",
+        totais.vlrFrete,
+        totais.despesas,
+        totais.abastecimento,
+        totais.pedagio,
+        totais.seguro,
+        totais.adm,
+        totais.base,
+        totais.comissao,
+      ]];
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Faturamento");
+      XLSX.writeFile(wb, `${nomeArquivoExport()}.xlsx`);
+    } finally {
+      setGerandoExcel(false);
+    }
+  }
+
+  async function handleExportarPdf() {
+    setGerandoPdf(true);
+    try {
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import("jspdf"),
+        import("jspdf-autotable"),
+      ]);
+
+      const doc = new jsPDF({ orientation: "landscape" });
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      doc.text(tituloExport(), 14, 15);
+
+      autoTable(doc, {
+        startY: 20,
+        head: [headersExport],
+        body: linhasExport().map((row) =>
+          row.map((v) => (typeof v === "number" ? formatCurrency(v) : v))
+        ),
+        foot: [
+          [
+            `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
+            "",
+            "",
+            formatCurrency(totais.vlrFrete),
+            formatCurrency(totais.despesas),
+            formatCurrency(totais.abastecimento),
+            formatCurrency(totais.pedagio),
+            formatCurrency(totais.seguro),
+            formatCurrency(totais.adm),
+            formatCurrency(totais.base),
+            formatCurrency(totais.comissao),
+          ],
+        ],
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+        footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+      });
+
+      doc.save(`${nomeArquivoExport()}.pdf`);
+    } finally {
+      setGerandoPdf(false);
+    }
+  }
 
   function handleSalvar() {
     const lancamentos: LancamentoInput[] = linhas.map((l) => ({
@@ -225,6 +343,22 @@ export default function FaturamentoEditor({
           className="bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
         >
           {isPending ? "Salvando..." : "Salvar faturamento"}
+        </button>
+        <button
+          type="button"
+          onClick={handleExportarExcel}
+          disabled={gerandoExcel}
+          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+        >
+          {gerandoExcel ? "Gerando..." : "Exportar Excel"}
+        </button>
+        <button
+          type="button"
+          onClick={handleExportarPdf}
+          disabled={gerandoPdf}
+          className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+        >
+          {gerandoPdf ? "Gerando..." : "Exportar PDF"}
         </button>
         {mensagem && <span className="text-sm text-emerald-600 font-medium">{mensagem}</span>}
       </div>

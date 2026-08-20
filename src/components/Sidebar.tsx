@@ -11,7 +11,7 @@ const NAV = [
   { href: "/veiculos", label: "Veículos", icon: "🚚" },
   { href: "/motoristas", label: "Motoristas", icon: "🧑‍✈️" },
   { href: "/faturamento", label: "Faturamento", icon: "💰" },
-  { href: "/impostos", label: "IPVA / Licenciamento", icon: "🧾" },
+  // IPVA / Licenciamento: oculto do menu a pedido, rota continua ativa em /impostos
   { href: "/relatorios", label: "Relatórios", icon: "📄" },
 ];
 
@@ -27,7 +27,7 @@ export default function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 bg-slate-900 text-slate-200 flex flex-col">
+    <aside className="w-64 shrink-0 bg-slate-900 text-slate-200 flex flex-col h-screen sticky top-0 overflow-y-auto">
       <div className="px-5 py-6 border-b border-slate-800">
         <p className="text-white font-bold text-lg leading-tight">{nomeSistema}</p>
         {subtitulo && <p className="text-slate-400 text-xs mt-0.5">{subtitulo}</p>}

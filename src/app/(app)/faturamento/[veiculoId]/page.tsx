@@ -100,6 +100,9 @@ export default async function FaturamentoVeiculoPage({
         veiculoId={veiculo.id}
         ano={ano}
         mes={mes}
+        mesNome={MESES[mes - 1]}
+        placa={veiculo.placa}
+        motoristaNome={motoristaEfetivo?.nome ?? null}
         motoristaId={motoristaEfetivo?.id ?? null}
         lancamentosIniciais={mensal?.lancamentos ?? []}
       />
