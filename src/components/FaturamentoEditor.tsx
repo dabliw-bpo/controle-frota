@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { Plus, Save, FileSpreadsheet, FileText, Trash2 } from "lucide-react";
 import { salvarFaturamento, type LancamentoInput } from "@/app/(app)/faturamento/actions";
 import { formatCurrency } from "@/lib/format";
 
@@ -300,10 +301,11 @@ export default function FaturamentoEditor({
                   <button
                     type="button"
                     onClick={() => removerLinha(idx)}
-                    className="text-red-500 hover:text-red-700 text-xs px-1"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-danger-500 hover:bg-danger-50 hover:text-danger-600"
                     title="Remover linha"
+                    aria-label="Remover linha"
                   >
-                    ✕
+                    <Trash2 size={15} strokeWidth={2} />
                   </button>
                 </td>
               </tr>
@@ -328,39 +330,43 @@ export default function FaturamentoEditor({
         </table>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
         <button
           type="button"
           onClick={adicionarLinha}
-          className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2"
+          className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5"
         >
-          + Adicionar linha
+          <Plus size={16} strokeWidth={2.5} />
+          Adicionar linha
         </button>
         <button
           type="button"
           onClick={handleSalvar}
           disabled={isPending}
-          className="bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+          className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
         >
+          <Save size={16} strokeWidth={2} />
           {isPending ? "Salvando..." : "Salvar faturamento"}
         </button>
         <button
           type="button"
           onClick={handleExportarExcel}
           disabled={gerandoExcel}
-          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+          className="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
         >
+          <FileSpreadsheet size={16} strokeWidth={2} />
           {gerandoExcel ? "Gerando..." : "Exportar Excel"}
         </button>
         <button
           type="button"
           onClick={handleExportarPdf}
           disabled={gerandoPdf}
-          className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+          className="inline-flex items-center gap-1.5 bg-danger-600 hover:bg-danger-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
         >
+          <FileText size={16} strokeWidth={2} />
           {gerandoPdf ? "Gerando..." : "Exportar PDF"}
         </button>
-        {mensagem && <span className="text-sm text-emerald-600 font-medium">{mensagem}</span>}
+        {mensagem && <span className="text-sm text-success-600 font-medium">{mensagem}</span>}
       </div>
     </div>
   );

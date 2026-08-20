@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wallet, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import SortableTh from "@/components/SortableTh";
 
@@ -37,7 +38,7 @@ export default async function FaturamentoPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Faturamento</h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -46,21 +47,22 @@ export default async function FaturamentoPage({
         </div>
         <Link
           href="/faturamento/novo"
-          className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2"
+          className="inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
         >
-          + Novo faturamento
+          <Plus size={16} strokeWidth={2.5} />
+          Novo faturamento
         </Link>
       </div>
 
-      <form className="flex gap-3 bg-white p-4 rounded-xl border border-slate-200">
+      <form className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200">
         <input
           type="text"
           name="q"
           defaultValue={q}
           placeholder="Buscar por motorista, CPF ou placa..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
-        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2">
+        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
         </button>
       </form>
@@ -96,9 +98,10 @@ export default async function FaturamentoPage({
                     <Link
                       href={`/faturamento/${m.veiculo.id}`}
                       title="Lançar faturamento"
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-base"
+                      aria-label={`Lançar faturamento de ${m.nome}`}
+                      className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand-600 hover:bg-brand-700 text-white"
                     >
-                      💰
+                      <Wallet size={16} strokeWidth={2} />
                     </Link>
                   )}
                 </td>

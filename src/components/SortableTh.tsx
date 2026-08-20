@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 
 export default function SortableTh({
   label,
@@ -27,8 +28,16 @@ export default function SortableTh({
     <th className="px-4 py-3 font-medium">
       <Link href={`?${params.toString()}`} className="inline-flex items-center gap-1 hover:text-slate-800">
         {label}
-        <span className={`text-[10px] leading-none ${isActive ? "text-brand-600" : "text-slate-300"}`}>
-          {isActive ? (currentDir === "asc" ? "▲" : "▼") : "▲▼"}
+        <span className={isActive ? "text-brand-600" : "text-slate-300"}>
+          {isActive ? (
+            currentDir === "asc" ? (
+              <ChevronUp size={14} strokeWidth={2.5} />
+            ) : (
+              <ChevronDown size={14} strokeWidth={2.5} />
+            )
+          ) : (
+            <ChevronsUpDown size={14} strokeWidth={2} />
+          )}
         </span>
       </Link>
     </th>

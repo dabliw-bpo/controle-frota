@@ -14,10 +14,10 @@ export default async function AppLayout({
   const config = await getConfiguracao();
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
       <Sidebar user={user} nomeSistema={config.nomeSistema} subtitulo={config.subtitulo} />
-      <main className="flex-1 min-w-0 bg-slate-50 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">{children}</div>
+      <main className="flex-1 min-w-0 min-h-0 bg-slate-50 overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">{children}</div>
       </main>
     </div>
   );

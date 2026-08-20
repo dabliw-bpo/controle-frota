@@ -69,7 +69,7 @@ export default async function FaturamentoVeiculoPage({
         </p>
       </div>
 
-      <form className="flex gap-3 bg-white p-4 rounded-xl border border-slate-200 items-end">
+      <form className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-slate-200 items-end">
         <label className="text-sm">
           <span className="block font-medium text-slate-700 mb-1">Mês</span>
           <select name="mes" defaultValue={mes} className="input">
@@ -90,7 +90,7 @@ export default async function FaturamentoVeiculoPage({
             ))}
           </select>
         </label>
-        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Ver período
         </button>
       </form>

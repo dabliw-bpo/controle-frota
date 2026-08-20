@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FileSpreadsheet, FileText, Printer } from "lucide-react";
 
 export type RelatorioPdfConfig = {
   title: string;
@@ -60,26 +61,29 @@ export default function RelatorioAcoes({
   }
 
   return (
-    <div className="no-print flex gap-2">
+    <div className="no-print flex flex-wrap gap-2">
       <a
         href={exportHref}
-        className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2"
+        className="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
       >
+        <FileSpreadsheet size={16} strokeWidth={2} />
         Exportar CSV
       </a>
       <button
         type="button"
         onClick={handlePdf}
         disabled={gerandoPdf}
-        className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+        className="inline-flex items-center gap-1.5 bg-danger-600 hover:bg-danger-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
       >
+        <FileText size={16} strokeWidth={2} />
         {gerandoPdf ? "Gerando..." : "Exportar PDF"}
       </button>
       <button
         type="button"
         onClick={() => window.print()}
-        className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2"
+        className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
       >
+        <Printer size={16} strokeWidth={2} />
         Imprimir
       </button>
     </div>
