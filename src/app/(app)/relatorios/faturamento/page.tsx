@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import RelatorioAcoes from "@/components/RelatorioAcoes";
 
 const MESES = [
@@ -47,7 +47,8 @@ export default async function RelatorioFaturamentoPage({
         0
       );
       const lucro = frete - abastecimento - despesas - pedagio - comissao;
-      return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro };
+      const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
+      return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, placas };
     })
     .sort((a, b) => b.frete - a.frete);
 
@@ -64,7 +65,7 @@ export default async function RelatorioFaturamentoPage({
   );
 
   const pdfRows = linhas.map((l) => [
-    l.veiculo.placa,
+    l.placas,
     l.motorista?.nome ?? "—",
     formatCurrency(l.frete),
     formatCurrency(l.despesas),
@@ -153,7 +154,7 @@ export default async function RelatorioFaturamentoPage({
           <tbody>
             {linhas.map((l) => (
               <tr key={l.id} className="border-b border-slate-50 last:border-0">
-                <td className="px-4 py-2 font-medium whitespace-nowrap">{l.veiculo.placa}</td>
+                <td className="px-4 py-2 font-medium whitespace-nowrap">{l.placas}</td>
                 <td className="px-4 py-2 text-slate-600">{l.motorista?.nome ?? "—"}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.frete)}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.despesas)}</td>

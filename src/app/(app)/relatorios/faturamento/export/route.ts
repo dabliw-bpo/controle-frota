@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { toCsv, csvResponse } from "@/lib/csv";
+import { placasUtilizadas } from "@/lib/format";
 import { NextRequest } from "next/server";
 
 const COMISSAO_PERCENTUAL = 0.12;
@@ -29,7 +30,16 @@ export async function GET(request: NextRequest) {
       0
     );
     const lucro = frete - abastecimento - despesas - pedagio - comissao;
-    return [f.veiculo.placa, f.motorista?.nome, frete, despesas, abastecimento, pedagio, comissao, lucro];
+    return [
+      placasUtilizadas(f.lancamentos, f.veiculo.placa),
+      f.motorista?.nome,
+      frete,
+      despesas,
+      abastecimento,
+      pedagio,
+      comissao,
+      lucro,
+    ];
   });
 
   const csv = toCsv(

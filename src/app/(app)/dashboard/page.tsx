@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { STATUS_VEICULO_OUTRO_MENU } from "@/lib/constants";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import { getStatusList } from "@/lib/settings";
 import PieChart, { PIE_PALETTE, corNomeParaHex } from "@/components/PieChart";
 
@@ -73,7 +73,8 @@ export default async function DashboardPage({
       );
       const lucro = frete - abastecimento - despesas - pedagio - comissao;
       const margem = frete > 0 ? lucro / frete : 0;
-      return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, margem };
+      const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
+      return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, margem, placas };
     })
     .sort((a, b) => b.lucro - a.lucro);
 
@@ -204,7 +205,7 @@ export default async function DashboardPage({
                 <tr key={l.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <Link href={`/faturamento/${l.veiculoId}?ano=${ano}&mes=${mes}`} className="font-medium text-brand-600 hover:underline">
-                      {l.veiculo.placa}
+                      {l.placas}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-600">{l.motorista?.nome ?? "—"}</td>

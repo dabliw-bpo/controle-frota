@@ -7,3 +7,17 @@ export function formatNumberInput(value?: number | null): string {
   if (value === null || value === undefined) return "";
   return String(value);
 }
+
+// Lista (sem repetição) das placas realmente usadas nos lançamentos de um
+// faturamento mensal; cai para a placa do veículo quando nenhum lançamento
+// tem placa própria informada (ex: registros antigos).
+export function placasUtilizadas(
+  lancamentos: { placa?: string | null }[],
+  placaPadrao: string
+): string {
+  const set = new Set(
+    lancamentos.map((l) => (l.placa || "").trim().toUpperCase()).filter(Boolean)
+  );
+  if (set.size === 0) return placaPadrao;
+  return Array.from(set).sort().join(", ");
+}
