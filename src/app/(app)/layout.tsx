@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getConfiguracao } from "@/lib/settings";
+import { prisma } from "@/lib/prisma";
 import Sidebar from "@/components/Sidebar";
 
 export default async function AppLayout({
@@ -10,6 +11,12 @@ export default async function AppLayout({
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: user.id },
+    select: { termosAceitosEm: true },
+  });
+  if (!usuario?.termosAceitosEm) redirect("/termos");
 
   const config = await getConfiguracao();
 

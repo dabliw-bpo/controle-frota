@@ -13,14 +13,15 @@ datasource db {
 // (ver src/lib/settings.ts) — um enum do banco exigiria migration a cada alteração.
 
 model Usuario {
-  id           String   @id @default(cuid())
-  nome         String
-  cpf          String   @unique // apenas dígitos, sem máscara
-  senhaHash    String
-  role         String   @default("VISUALIZADOR") // ADMIN | GESTOR | VISUALIZADOR
-  ativo        Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String    @id @default(cuid())
+  nome            String
+  cpf             String    @unique // apenas dígitos, sem máscara
+  senhaHash       String
+  role            String    @default("VISUALIZADOR") // ADMIN | GESTOR | VISUALIZADOR
+  ativo           Boolean   @default(true)
+  termosAceitosEm DateTime? // data/hora em que aceitou os Termos de Uso e Política de Privacidade
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Empresa {
