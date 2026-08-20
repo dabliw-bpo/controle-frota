@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/format";
 
 type LinhaEditavel = {
   data: string;
+  placa: string;
   descricao: string;
   cte: string;
   vlrFrete: string;
@@ -19,9 +20,10 @@ type LinhaEditavel = {
 
 const COMISSAO_PERCENTUAL = 0.12;
 
-function linhaVazia(): LinhaEditavel {
+function linhaVazia(placaPadrao: string): LinhaEditavel {
   return {
     data: "",
+    placa: placaPadrao,
     descricao: "",
     cte: "",
     vlrFrete: "",
@@ -57,6 +59,7 @@ export default function FaturamentoEditor({
   motoristaId: string | null;
   lancamentosIniciais: {
     data: string | null;
+    placa?: string | null;
     descricao: string | null;
     cte: string | null;
     vlrFrete: number | null;
@@ -70,6 +73,7 @@ export default function FaturamentoEditor({
   const [linhas, setLinhas] = useState<LinhaEditavel[]>(() => {
     const iniciais = lancamentosIniciais.map((l) => ({
       data: l.data ?? "",
+      placa: l.placa ?? placa,
       descricao: l.descricao ?? "",
       cte: l.cte ?? "",
       vlrFrete: l.vlrFrete != null ? String(l.vlrFrete) : "",
@@ -79,7 +83,7 @@ export default function FaturamentoEditor({
       seguro: l.seguro != null ? String(l.seguro) : "",
       adm: l.adm != null ? String(l.adm) : "",
     }));
-    return iniciais.length ? iniciais : [linhaVazia()];
+    return iniciais.length ? iniciais : [linhaVazia(placa)];
   });
   const [isPending, startTransition] = useTransition();
   const [mensagem, setMensagem] = useState("");
@@ -91,11 +95,11 @@ export default function FaturamentoEditor({
   }
 
   function adicionarLinha() {
-    setLinhas((prev) => [...prev, linhaVazia()]);
+    setLinhas((prev) => [...prev, linhaVazia(placa)]);
   }
 
   function removerLinha(idx: number) {
-    setLinhas((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : [linhaVazia()]));
+    setLinhas((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : [linhaVazia(placa)]));
   }
 
   const calculadas = useMemo(
@@ -131,6 +135,7 @@ export default function FaturamentoEditor({
 
   const headersExport = [
     "Data",
+    "Placa",
     "Descrição",
     "CTE",
     "Vlr. Frete",
@@ -146,6 +151,7 @@ export default function FaturamentoEditor({
   function linhasExport(): (string | number)[][] {
     return linhas.map((l, idx) => [
       l.data,
+      l.placa,
       l.descricao,
       l.cte,
       calculadas[idx].vlrFrete,
@@ -173,6 +179,7 @@ export default function FaturamentoEditor({
       const XLSX = await import("xlsx");
       const rows = [headersExport, ...linhasExport(), [
         `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
+        "",
         "",
         "",
         totais.vlrFrete,
@@ -217,6 +224,7 @@ export default function FaturamentoEditor({
             `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
             "",
             "",
+            "",
             formatCurrency(totais.vlrFrete),
             formatCurrency(totais.despesas),
             formatCurrency(totais.abastecimento),
@@ -242,6 +250,7 @@ export default function FaturamentoEditor({
   function handleSalvar() {
     const lancamentos: LancamentoInput[] = linhas.map((l) => ({
       data: l.data.trim() || null,
+      placa: l.placa.trim() || null,
       descricao: l.descricao.trim() || null,
       cte: l.cte.trim() || null,
       vlrFrete: l.vlrFrete.trim() ? num(l.vlrFrete) : null,
@@ -266,6 +275,7 @@ export default function FaturamentoEditor({
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
               <th className="px-3 py-2 font-medium min-w-[110px]">Data</th>
+              <th className="px-3 py-2 font-medium min-w-[100px]">Placa</th>
               <th className="px-3 py-2 font-medium min-w-[220px]">Descrição</th>
               <th className="px-3 py-2 font-medium min-w-[100px]">CTE</th>
               <th className="px-3 py-2 font-medium min-w-[130px]">Vlr. Frete</th>
@@ -283,6 +293,7 @@ export default function FaturamentoEditor({
             {linhas.map((l, idx) => (
               <tr key={idx} className="border-b border-slate-50 last:border-0">
                 <Cell value={l.data} onChange={(v) => atualizarCelula(idx, "data", v)} placeholder="dd/mm/aaaa" />
+                <Cell value={l.placa} onChange={(v) => atualizarCelula(idx, "placa", v.toUpperCase())} placeholder={placa} />
                 <Cell value={l.descricao} onChange={(v) => atualizarCelula(idx, "descricao", v)} placeholder="Origem X Destino" />
                 <Cell value={l.cte} onChange={(v) => atualizarCelula(idx, "cte", v)} />
                 <Cell value={l.vlrFrete} onChange={(v) => atualizarCelula(idx, "vlrFrete", v)} numeric />
@@ -313,7 +324,7 @@ export default function FaturamentoEditor({
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
-              <td className="px-3 py-2" colSpan={3}>
+              <td className="px-3 py-2" colSpan={4}>
                 Total ({linhas.length} lançamento{linhas.length === 1 ? "" : "s"})
               </td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.vlrFrete)}</td>

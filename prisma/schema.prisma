@@ -211,6 +211,7 @@ model FaturamentoLancamento {
 
   ordem         Int      @default(0)
   data          String?
+  placa         String? // placa do caminhão que rodou (pode diferir do veículo dono do faturamento)
   descricao     String?
   cte           String?
   vlrFrete      Float?

@@ -14,6 +14,7 @@ async function requireEditor() {
 
 export type LancamentoInput = {
   data: string | null;
+  placa: string | null;
   descricao: string | null;
   cte: string | null;
   vlrFrete: number | null;
@@ -70,6 +71,7 @@ export async function salvarFaturamento(input: {
               faturamentoMensalId: mensal.id,
               ordem: idx,
               data: l.data,
+              placa: l.placa,
               descricao: l.descricao,
               cte: l.cte,
               vlrFrete: l.vlrFrete,
