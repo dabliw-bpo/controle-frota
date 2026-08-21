@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import RelatorioAcoes from "@/components/RelatorioAcoes";
+import SortableTh from "@/components/SortableTh";
 
 const MESES = [
   "Janeiro",
@@ -20,37 +21,86 @@ const MESES = [
 
 const COMISSAO_PERCENTUAL = 0.12;
 
+const SORT_FIELDS = [
+  "placa",
+  "motorista",
+  "frete",
+  "despesas",
+  "abastecimento",
+  "pedagio",
+  "comissao",
+  "lucro",
+] as const;
+type SortField = (typeof SORT_FIELDS)[number];
+
+type ComCampoOrdenavel = {
+  placas: string;
+  motorista: { nome: string } | null;
+  frete: number;
+  despesas: number;
+  abastecimento: number;
+  pedagio: number;
+  comissao: number;
+  lucro: number;
+};
+
+function ordenar<T extends ComCampoOrdenavel>(linhas: T[], sort: string | undefined, dir: "asc" | "desc"): T[] {
+  const field: SortField = SORT_FIELDS.includes(sort as SortField) ? (sort as SortField) : "frete";
+  const mult = dir === "asc" ? 1 : -1;
+  return [...linhas].sort((a, b) => {
+    if (field === "placa") return mult * a.placas.localeCompare(b.placas);
+    if (field === "motorista")
+      return mult * (a.motorista?.nome ?? "").localeCompare(b.motorista?.nome ?? "");
+    return mult * (a[field] - b[field]);
+  });
+}
+
 export default async function RelatorioFaturamentoPage({
   searchParams,
 }: {
-  searchParams: { mes?: string; ano?: string };
+  searchParams: { mes?: string; ano?: string; motorista?: string; placa?: string; sort?: string; dir?: string };
 }) {
   const hoje = new Date();
   const mes = Number(searchParams.mes) || hoje.getMonth() + 1;
   const ano = Number(searchParams.ano) || hoje.getFullYear();
   const anoAtual = hoje.getFullYear();
   const anos = Array.from({ length: 5 }, (_, i) => anoAtual + 1 - i);
+  const motoristaQ = searchParams.motorista?.trim() || "";
+  const placaQ = searchParams.placa?.trim() || "";
+  const dirAtual: "asc" | "desc" = searchParams.dir === "asc" ? "asc" : "desc";
 
   const faturamentos = await prisma.faturamentoMensal.findMany({
-    where: { ano, mes },
+    where: {
+      ano,
+      mes,
+      ...(motoristaQ ? { motorista: { nome: { contains: motoristaQ, mode: "insensitive" } } } : {}),
+      ...(placaQ
+        ? {
+            OR: [
+              { veiculo: { placa: { contains: placaQ, mode: "insensitive" } } },
+              { lancamentos: { some: { placa: { contains: placaQ, mode: "insensitive" } } } },
+            ],
+          }
+        : {}),
+    },
     include: { veiculo: true, motorista: true, lancamentos: true },
   });
 
-  const linhas = faturamentos
-    .map((f) => {
-      const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
-      const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
-      const despesas = f.lancamentos.reduce((acc, l) => acc + (l.despesas ?? 0), 0);
-      const pedagio = f.lancamentos.reduce((acc, l) => acc + (l.pedagio ?? 0), 0);
-      const comissao = f.lancamentos.reduce(
-        (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
-        0
-      );
-      const lucro = frete - abastecimento - despesas - pedagio - comissao;
-      const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
-      return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, placas };
-    })
-    .sort((a, b) => b.frete - a.frete);
+  const linhasBrutas = faturamentos.map((f) => {
+    const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
+    const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
+    const despesas = f.lancamentos.reduce((acc, l) => acc + (l.despesas ?? 0), 0);
+    const pedagio = f.lancamentos.reduce((acc, l) => acc + (l.pedagio ?? 0), 0);
+    const comissao = f.lancamentos.reduce(
+      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
+      0
+    );
+    const lucro = frete - abastecimento - despesas - pedagio - comissao;
+    const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
+    return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, placas };
+  });
+
+  const linhas = ordenar(linhasBrutas, searchParams.sort, dirAtual);
 
   const totais = linhas.reduce(
     (acc, l) => ({
@@ -75,6 +125,10 @@ export default async function RelatorioFaturamentoPage({
     formatCurrency(l.lucro),
   ]);
 
+  const exportParams = new URLSearchParams({ ano: String(ano), mes: String(mes) });
+  if (motoristaQ) exportParams.set("motorista", motoristaQ);
+  if (placaQ) exportParams.set("placa", placaQ);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -88,7 +142,7 @@ export default async function RelatorioFaturamentoPage({
           </p>
         </div>
         <RelatorioAcoes
-          exportHref={`/relatorios/faturamento/export?ano=${ano}&mes=${mes}`}
+          exportHref={`/relatorios/faturamento/export?${exportParams.toString()}`}
           pdf={{
             title: "Relatório de Faturamento",
             subtitle: `${MESES[mes - 1]}/${ano} · ${linhas.length} placa(s)`,
@@ -111,7 +165,7 @@ export default async function RelatorioFaturamentoPage({
         />
       </div>
 
-      <form className="no-print flex gap-2 items-end bg-white p-4 rounded-xl border border-slate-200">
+      <form className="no-print flex flex-wrap gap-3 items-end bg-white p-4 rounded-xl border border-slate-200">
         <label className="text-sm">
           <span className="block font-medium text-slate-700 mb-1">Mês</span>
           <select name="mes" defaultValue={mes} className="input">
@@ -132,6 +186,26 @@ export default async function RelatorioFaturamentoPage({
             ))}
           </select>
         </label>
+        <label className="text-sm">
+          <span className="block font-medium text-slate-700 mb-1">Motorista</span>
+          <input
+            type="text"
+            name="motorista"
+            defaultValue={motoristaQ}
+            placeholder="Buscar motorista..."
+            className="input"
+          />
+        </label>
+        <label className="text-sm">
+          <span className="block font-medium text-slate-700 mb-1">Placa</span>
+          <input
+            type="text"
+            name="placa"
+            defaultValue={placaQ}
+            placeholder="Buscar placa..."
+            className="input uppercase"
+          />
+        </label>
         <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
           Filtrar
         </button>
@@ -141,14 +215,14 @@ export default async function RelatorioFaturamentoPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
-              <th className="px-4 py-3 font-medium">Placa</th>
-              <th className="px-4 py-3 font-medium">Motorista</th>
-              <th className="px-4 py-3 font-medium text-right">Vlr. Frete</th>
-              <th className="px-4 py-3 font-medium text-right">Despesas</th>
-              <th className="px-4 py-3 font-medium text-right">Abastecimento</th>
-              <th className="px-4 py-3 font-medium text-right">Pedágio</th>
-              <th className="px-4 py-3 font-medium text-right">Comissão</th>
-              <th className="px-4 py-3 font-medium text-right">Lucro</th>
+              <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Vlr. Frete" sortKey="frete" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Despesas" sortKey="despesas" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Abastecimento" sortKey="abastecimento" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Pedágio" sortKey="pedagio" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Comissão" sortKey="comissao" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Lucro" sortKey="lucro" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
             </tr>
           </thead>
           <tbody>

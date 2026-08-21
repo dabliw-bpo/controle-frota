@@ -14,9 +14,23 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const mes = Number(searchParams.get("mes")) || hoje.getMonth() + 1;
   const ano = Number(searchParams.get("ano")) || hoje.getFullYear();
+  const motoristaQ = searchParams.get("motorista")?.trim() || "";
+  const placaQ = searchParams.get("placa")?.trim() || "";
 
   const faturamentos = await prisma.faturamentoMensal.findMany({
-    where: { ano, mes },
+    where: {
+      ano,
+      mes,
+      ...(motoristaQ ? { motorista: { nome: { contains: motoristaQ, mode: "insensitive" } } } : {}),
+      ...(placaQ
+        ? {
+            OR: [
+              { veiculo: { placa: { contains: placaQ, mode: "insensitive" } } },
+              { lancamentos: { some: { placa: { contains: placaQ, mode: "insensitive" } } } },
+            ],
+          }
+        : {}),
+    },
     include: { veiculo: true, motorista: true, lancamentos: true },
   });
 
