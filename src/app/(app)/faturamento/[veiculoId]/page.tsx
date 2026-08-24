@@ -37,7 +37,11 @@ export default async function FaturamentoVeiculoPage({
 
   const mensal = await prisma.faturamentoMensal.findUnique({
     where: { veiculoId_ano_mes: { veiculoId: veiculo.id, ano, mes } },
-    include: { lancamentos: { orderBy: { ordem: "asc" } }, motorista: true },
+    include: {
+      lancamentos: { orderBy: { ordem: "asc" } },
+      diarias: { orderBy: { ordem: "asc" } },
+      motorista: true,
+    },
   });
 
   const motoristaEscolhido = searchParams.motoristaId
@@ -118,6 +122,7 @@ export default async function FaturamentoVeiculoPage({
         motoristaNome={motoristaEfetivo?.nome ?? null}
         motoristaId={motoristaEfetivo?.id ?? null}
         lancamentosIniciais={mensal?.lancamentos ?? []}
+        diariasIniciais={mensal?.diarias ?? []}
       />
     </div>
   );

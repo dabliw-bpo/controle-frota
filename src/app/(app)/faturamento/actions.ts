@@ -25,12 +25,19 @@ export type LancamentoInput = {
   adm: number | null;
 };
 
+export type DiariaInput = {
+  data: string | null;
+  descricao: string | null;
+  valor: number | null;
+};
+
 export async function salvarFaturamento(input: {
   veiculoId: string;
   ano: number;
   mes: number;
   motoristaId: string | null;
   lancamentos: LancamentoInput[];
+  diarias: DiariaInput[];
 }) {
   await requireEditor();
 
@@ -62,6 +69,10 @@ export async function salvarFaturamento(input: {
       l.adm
   );
 
+  const diariasValidas = input.diarias.filter(
+    (d) => (d.data && d.data.trim()) || (d.descricao && d.descricao.trim()) || d.valor
+  );
+
   await prisma.$transaction([
     prisma.faturamentoLancamento.deleteMany({ where: { faturamentoMensalId: mensal.id } }),
     ...(linhasValidas.length
@@ -80,6 +91,20 @@ export async function salvarFaturamento(input: {
               pedagio: l.pedagio,
               seguro: l.seguro,
               adm: l.adm,
+            })),
+          }),
+        ]
+      : []),
+    prisma.faturamentoDiaria.deleteMany({ where: { faturamentoMensalId: mensal.id } }),
+    ...(diariasValidas.length
+      ? [
+          prisma.faturamentoDiaria.createMany({
+            data: diariasValidas.map((d, idx) => ({
+              faturamentoMensalId: mensal.id,
+              ordem: idx,
+              data: d.data,
+              descricao: d.descricao,
+              valor: d.valor,
             })),
           }),
         ]

@@ -197,6 +197,7 @@ model FaturamentoMensal {
   mes          Int      // 1-12
 
   lancamentos  FaturamentoLancamento[]
+  diarias      FaturamentoDiaria[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -222,6 +223,19 @@ model FaturamentoLancamento {
   adm           Float?
 
   createdAt     DateTime @default(now())
+}
+
+model FaturamentoDiaria {
+  id                  String            @id @default(cuid())
+  faturamentoMensalId String
+  faturamentoMensal   FaturamentoMensal @relation(fields: [faturamentoMensalId], references: [id], onDelete: Cascade)
+
+  ordem     Int      @default(0)
+  data      String?
+  descricao String?
+  valor     Float?
+
+  createdAt DateTime @default(now())
 }
 
 model Configuracao {
