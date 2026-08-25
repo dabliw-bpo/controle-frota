@@ -47,7 +47,7 @@ export default async function DashboardPage({
       prisma.veiculo.findMany({ where: FROTA_ATIVA_WHERE, select: { valor: true } }),
       prisma.faturamentoMensal.findMany({
         where: { ano, mes },
-        include: { veiculo: true, motorista: true, lancamentos: true },
+        include: { veiculo: true, motorista: true, lancamentos: true, diarias: true },
       }),
     ]);
 
@@ -71,10 +71,11 @@ export default async function DashboardPage({
         (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
         0
       );
+      const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
       const lucro = frete - abastecimento - despesas - pedagio - comissao;
       const margem = frete > 0 ? lucro / frete : 0;
       const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
-      return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, margem, placas };
+      return { ...f, frete, abastecimento, despesas, pedagio, comissao, diarias, lucro, margem, placas };
     })
     .sort((a, b) => b.lucro - a.lucro);
 
@@ -83,9 +84,10 @@ export default async function DashboardPage({
       frete: acc.frete + l.frete,
       abastecimento: acc.abastecimento + l.abastecimento,
       comissao: acc.comissao + l.comissao,
+      diarias: acc.diarias + l.diarias,
       lucro: acc.lucro + l.lucro,
     }),
-    { frete: 0, abastecimento: 0, comissao: 0, lucro: 0 }
+    { frete: 0, abastecimento: 0, comissao: 0, diarias: 0, lucro: 0 }
   );
   const margemMedia = totaisFaturamento.frete > 0 ? totaisFaturamento.lucro / totaisFaturamento.frete : 0;
 
@@ -196,6 +198,7 @@ export default async function DashboardPage({
                 <th className="px-4 py-3 font-medium">Vlr. Frete</th>
                 <th className="px-4 py-3 font-medium">Abastecimento</th>
                 <th className="px-4 py-3 font-medium">Comissão</th>
+                <th className="px-4 py-3 font-medium">Diárias</th>
                 <th className="px-4 py-3 font-medium">Lucro</th>
                 <th className="px-4 py-3 font-medium">Margem</th>
               </tr>
@@ -212,6 +215,7 @@ export default async function DashboardPage({
                   <td className="px-4 py-3 text-slate-600">{formatCurrency(l.frete)}</td>
                   <td className="px-4 py-3 text-slate-600">{formatCurrency(l.abastecimento)}</td>
                   <td className="px-4 py-3 text-slate-600">{formatCurrency(l.comissao)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.diarias)}</td>
                   <td
                     className={`px-4 py-3 font-medium ${l.lucro >= 0 ? "text-emerald-700" : "text-red-600"}`}
                   >
@@ -224,7 +228,7 @@ export default async function DashboardPage({
               ))}
               {linhasFaturamento.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                     Nenhum faturamento lançado neste período.
                   </td>
                 </tr>
@@ -239,6 +243,7 @@ export default async function DashboardPage({
                   <td className="px-4 py-3">{formatCurrency(totaisFaturamento.frete)}</td>
                   <td className="px-4 py-3">{formatCurrency(totaisFaturamento.abastecimento)}</td>
                   <td className="px-4 py-3">{formatCurrency(totaisFaturamento.comissao)}</td>
+                  <td className="px-4 py-3">{formatCurrency(totaisFaturamento.diarias)}</td>
                   <td className={totaisFaturamento.lucro >= 0 ? "text-emerald-700 px-4 py-3" : "text-red-600 px-4 py-3"}>
                     {formatCurrency(totaisFaturamento.lucro)}
                   </td>
