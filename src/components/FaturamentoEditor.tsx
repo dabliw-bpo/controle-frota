@@ -123,6 +123,7 @@ export default function FaturamentoEditor({
   });
   const [isPending, startTransition] = useTransition();
   const [mensagem, setMensagem] = useState("");
+  const [erroValidacao, setErroValidacao] = useState("");
   const [gerandoExcel, setGerandoExcel] = useState(false);
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [clientesLista, setClientesLista] = useState(clientes);
@@ -355,6 +356,35 @@ export default function FaturamentoEditor({
   }
 
   function handleSalvar() {
+    const linhasEmUso = linhas
+      .map((l, idx) => ({ l, idx }))
+      .filter(
+        ({ l }) =>
+          l.data.trim() ||
+          l.descricao.trim() ||
+          l.cte.trim() ||
+          l.vlrFrete.trim() ||
+          l.despesas.trim() ||
+          l.abastecimento.trim() ||
+          l.pedagio.trim() ||
+          l.seguro.trim() ||
+          l.adm.trim()
+      );
+
+    const linhasIncompletas = linhasEmUso.filter(
+      ({ l }) =>
+        !l.data.trim() || !l.placa.trim() || !l.descricao.trim() || !l.cte.trim() || !l.clienteId.trim() || !l.vlrFrete.trim()
+    );
+
+    if (linhasIncompletas.length > 0) {
+      const numeros = linhasIncompletas.map(({ idx }) => idx + 1).join(", ");
+      setErroValidacao(
+        `Preencha Data, Placa, Descrição, CTE, Cliente e Vlr. Frete na${linhasIncompletas.length > 1 ? "s linhas" : " linha"} ${numeros}.`
+      );
+      return;
+    }
+    setErroValidacao("");
+
     const lancamentos: LancamentoInput[] = linhas.map((l) => ({
       data: l.data.trim() || null,
       placa: l.placa || null,
@@ -389,12 +419,24 @@ export default function FaturamentoEditor({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
-              <th className="px-3 py-2 font-medium min-w-[110px]">Data</th>
-              <th className="px-3 py-2 font-medium min-w-[110px]">Placa</th>
-              <th className="px-3 py-2 font-medium min-w-[220px]">Descrição</th>
-              <th className="px-3 py-2 font-medium min-w-[100px]">CTE</th>
-              <th className="px-3 py-2 font-medium min-w-[170px]">Cliente</th>
-              <th className="px-3 py-2 font-medium min-w-[130px]">Vlr. Frete</th>
+              <th className="px-3 py-2 font-medium min-w-[110px]">
+                Data <span className="text-danger-500">*</span>
+              </th>
+              <th className="px-3 py-2 font-medium min-w-[110px]">
+                Placa <span className="text-danger-500">*</span>
+              </th>
+              <th className="px-3 py-2 font-medium min-w-[220px]">
+                Descrição <span className="text-danger-500">*</span>
+              </th>
+              <th className="px-3 py-2 font-medium min-w-[100px]">
+                CTE <span className="text-danger-500">*</span>
+              </th>
+              <th className="px-3 py-2 font-medium min-w-[170px]">
+                Cliente <span className="text-danger-500">*</span>
+              </th>
+              <th className="px-3 py-2 font-medium min-w-[130px]">
+                Vlr. Frete <span className="text-danger-500">*</span>
+              </th>
               <th className="px-3 py-2 font-medium min-w-[110px]">Despesas</th>
               <th className="px-3 py-2 font-medium min-w-[130px]">Abastecimento</th>
               <th className="px-3 py-2 font-medium min-w-[100px]">Pedágio</th>
@@ -568,6 +610,11 @@ export default function FaturamentoEditor({
         </div>
       </div>
 
+      <p className="text-xs text-slate-400">
+        <span className="text-danger-500">*</span> Campos obrigatórios para salvar um lançamento (Data, Placa,
+        Descrição, CTE, Cliente e Vlr. Frete).
+      </p>
+
       <div className="flex flex-wrap items-center gap-2.5">
         <button
           type="button"
@@ -605,6 +652,7 @@ export default function FaturamentoEditor({
           {gerandoPdf ? "Gerando..." : "Exportar PDF"}
         </button>
         {mensagem && <span className="text-sm text-success-600 font-medium">{mensagem}</span>}
+        {erroValidacao && <span className="text-sm text-danger-600 font-medium">{erroValidacao}</span>}
       </div>
 
       {novoClienteLinha !== null && (
