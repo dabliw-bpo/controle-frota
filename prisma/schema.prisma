@@ -249,6 +249,7 @@ model FaturamentoDiaria {
 
   ordem     Int      @default(0)
   data      String?
+  placa     String? // placa do cavalo que gerou a diária
   descricao String?
   valor     Float?
 

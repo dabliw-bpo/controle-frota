@@ -91,6 +91,50 @@ export default async function DashboardPage({
   );
   const margemMedia = totaisFaturamento.frete > 0 ? totaisFaturamento.lucro / totaisFaturamento.frete : 0;
 
+  type Agregado = { chave: string; label: string; frete: number; abastecimento: number; comissao: number; diarias: number; lucro: number };
+
+  const porMotoristaMap = new Map<string, Agregado>();
+  for (const l of linhasFaturamento) {
+    const chave = l.motoristaId ?? "sem-motorista";
+    const atual =
+      porMotoristaMap.get(chave) ??
+      { chave, label: l.motorista?.nome ?? "Sem motorista", frete: 0, abastecimento: 0, comissao: 0, diarias: 0, lucro: 0 };
+    atual.frete += l.frete;
+    atual.abastecimento += l.abastecimento;
+    atual.comissao += l.comissao;
+    atual.diarias += l.diarias;
+    atual.lucro += l.lucro;
+    porMotoristaMap.set(chave, atual);
+  }
+  const porMotorista = Array.from(porMotoristaMap.values()).sort((a, b) => b.lucro - a.lucro);
+
+  const porPlacaMap = new Map<string, Agregado>();
+  for (const f of faturamentos) {
+    for (const l of f.lancamentos) {
+      const chave = (l.placa || f.veiculo.placa || "").trim().toUpperCase() || "—";
+      const atual =
+        porPlacaMap.get(chave) ?? { chave, label: chave, frete: 0, abastecimento: 0, comissao: 0, diarias: 0, lucro: 0 };
+      const frete = l.vlrFrete ?? 0;
+      const abastecimento = l.abastecimento ?? 0;
+      const despesas = l.despesas ?? 0;
+      const pedagio = l.pedagio ?? 0;
+      const comissao = (frete - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL;
+      atual.frete += frete;
+      atual.abastecimento += abastecimento;
+      atual.comissao += comissao;
+      atual.lucro += frete - abastecimento - despesas - pedagio - comissao;
+      porPlacaMap.set(chave, atual);
+    }
+    for (const d of f.diarias) {
+      const chave = (d.placa || f.veiculo.placa || "").trim().toUpperCase() || "—";
+      const atual =
+        porPlacaMap.get(chave) ?? { chave, label: chave, frete: 0, abastecimento: 0, comissao: 0, diarias: 0, lucro: 0 };
+      atual.diarias += d.valor ?? 0;
+      porPlacaMap.set(chave, atual);
+    }
+  }
+  const porPlaca = Array.from(porPlacaMap.values()).sort((a, b) => b.lucro - a.lucro);
+
   return (
     <div className="space-y-8">
       <div>
@@ -257,6 +301,105 @@ export default async function DashboardPage({
           Lucro = Vlr. Frete − Abastecimento − Despesas − Pedágio − Comissão. Não inclui custos fixos
           mensais (parcela do cavalo, seguro, rastreador), que não são lançados no sistema.
         </p>
+      </div>
+
+      {/* Demonstrativo por Motorista */}
+      <DemonstrativoTable
+        titulo="Demonstrativo de faturamento por Motorista"
+        colunaLabel="Motorista"
+        linhas={porMotorista}
+      />
+
+      {/* Demonstrativo por Placa */}
+      <DemonstrativoTable
+        titulo="Demonstrativo de faturamento por Placa"
+        colunaLabel="Placa"
+        linhas={porPlaca}
+      />
+    </div>
+  );
+}
+
+function DemonstrativoTable({
+  titulo,
+  colunaLabel,
+  linhas,
+}: {
+  titulo: string;
+  colunaLabel: string;
+  linhas: { chave: string; label: string; frete: number; abastecimento: number; comissao: number; diarias: number; lucro: number }[];
+}) {
+  const totais = linhas.reduce(
+    (acc, l) => ({
+      frete: acc.frete + l.frete,
+      abastecimento: acc.abastecimento + l.abastecimento,
+      comissao: acc.comissao + l.comissao,
+      diarias: acc.diarias + l.diarias,
+      lucro: acc.lucro + l.lucro,
+    }),
+    { frete: 0, abastecimento: 0, comissao: 0, diarias: 0, lucro: 0 }
+  );
+  const margemMedia = totais.frete > 0 ? totais.lucro / totais.frete : 0;
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-slate-900">{titulo}</h2>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
+              <th className="px-4 py-3 font-medium">{colunaLabel}</th>
+              <th className="px-4 py-3 font-medium">Vlr. Frete</th>
+              <th className="px-4 py-3 font-medium">Abastecimento</th>
+              <th className="px-4 py-3 font-medium">Comissão</th>
+              <th className="px-4 py-3 font-medium">Diárias</th>
+              <th className="px-4 py-3 font-medium">Lucro</th>
+              <th className="px-4 py-3 font-medium">Margem</th>
+            </tr>
+          </thead>
+          <tbody>
+            {linhas.map((l) => {
+              const margem = l.frete > 0 ? l.lucro / l.frete : 0;
+              return (
+                <tr key={l.chave} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                  <td className="px-4 py-3 font-medium text-slate-800">{l.label}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.frete)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.abastecimento)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.comissao)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.diarias)}</td>
+                  <td className={`px-4 py-3 font-medium ${l.lucro >= 0 ? "text-emerald-700" : "text-red-600"}`}>
+                    {formatCurrency(l.lucro)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <MargemBadge margem={margem} />
+                  </td>
+                </tr>
+              );
+            })}
+            {linhas.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                  Nenhum faturamento lançado neste período.
+                </td>
+              </tr>
+            )}
+          </tbody>
+          {linhas.length > 0 && (
+            <tfoot>
+              <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
+                <td className="px-4 py-3">Total ({linhas.length})</td>
+                <td className="px-4 py-3">{formatCurrency(totais.frete)}</td>
+                <td className="px-4 py-3">{formatCurrency(totais.abastecimento)}</td>
+                <td className="px-4 py-3">{formatCurrency(totais.comissao)}</td>
+                <td className="px-4 py-3">{formatCurrency(totais.diarias)}</td>
+                <td className={totais.lucro >= 0 ? "text-emerald-700 px-4 py-3" : "text-red-600 px-4 py-3"}>
+                  {formatCurrency(totais.lucro)}
+                </td>
+                <td className="px-4 py-3">{formatPercent(margemMedia)}</td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
       </div>
     </div>
   );

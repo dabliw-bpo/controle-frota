@@ -28,6 +28,7 @@ export type LancamentoInput = {
 
 export type DiariaInput = {
   data: string | null;
+  placa: string | null;
   descricao: string | null;
   valor: number | null;
 };
@@ -105,6 +106,7 @@ export async function salvarFaturamento(input: {
               faturamentoMensalId: mensal.id,
               ordem: idx,
               data: d.data,
+              placa: d.placa,
               descricao: d.descricao,
               valor: d.valor,
             })),

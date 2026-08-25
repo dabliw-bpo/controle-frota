@@ -25,14 +25,21 @@ export default async function FaturamentoVeiculoPage({
   params: { veiculoId: string };
   searchParams: { ano?: string; mes?: string; motoristaId?: string };
 }) {
-  const [veiculo, clientes] = await Promise.all([
+  const [veiculo, clientes, veiculosCavalo] = await Promise.all([
     prisma.veiculo.findUnique({
       where: { id: params.veiculoId },
       include: { motoristasCadastrados: true },
     }),
     prisma.cliente.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
+    prisma.veiculo.findMany({
+      where: { carroceria: "CAVALO" },
+      select: { placa: true },
+      orderBy: { placa: "asc" },
+    }),
   ]);
   if (!veiculo) notFound();
+
+  const placasCavalo = Array.from(new Set([...veiculosCavalo.map((v) => v.placa), veiculo.placa])).sort();
 
   const hoje = new Date();
   const ano = Number(searchParams.ano) || hoje.getFullYear();
@@ -127,6 +134,7 @@ export default async function FaturamentoVeiculoPage({
         lancamentosIniciais={mensal?.lancamentos ?? []}
         diariasIniciais={mensal?.diarias ?? []}
         clientes={clientes}
+        placasCavalo={placasCavalo}
       />
     </div>
   );

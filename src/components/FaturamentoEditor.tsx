@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/format";
 
 type LinhaEditavel = {
   data: string;
+  placa: string;
   descricao: string;
   cte: string;
   clienteId: string;
@@ -20,15 +21,17 @@ type LinhaEditavel = {
 
 type DiariaEditavel = {
   data: string;
+  placa: string;
   descricao: string;
   valor: string;
 };
 
 const COMISSAO_PERCENTUAL = 0.12;
 
-function linhaVazia(): LinhaEditavel {
+function linhaVazia(placaPadrao: string): LinhaEditavel {
   return {
     data: "",
+    placa: placaPadrao,
     descricao: "",
     cte: "",
     clienteId: "",
@@ -41,8 +44,8 @@ function linhaVazia(): LinhaEditavel {
   };
 }
 
-function diariaVazia(): DiariaEditavel {
-  return { data: "", descricao: "", valor: "" };
+function diariaVazia(placaPadrao: string): DiariaEditavel {
+  return { data: "", placa: placaPadrao, descricao: "", valor: "" };
 }
 
 function num(v: string): number {
@@ -61,6 +64,7 @@ export default function FaturamentoEditor({
   lancamentosIniciais,
   diariasIniciais,
   clientes,
+  placasCavalo,
 }: {
   veiculoId: string;
   ano: number;
@@ -84,14 +88,17 @@ export default function FaturamentoEditor({
   }[];
   diariasIniciais: {
     data: string | null;
+    placa?: string | null;
     descricao: string | null;
     valor: number | null;
   }[];
   clientes: { id: string; nome: string }[];
+  placasCavalo: string[];
 }) {
   const [linhas, setLinhas] = useState<LinhaEditavel[]>(() => {
     const iniciais = lancamentosIniciais.map((l) => ({
       data: l.data ?? "",
+      placa: l.placa ?? placa,
       descricao: l.descricao ?? "",
       cte: l.cte ?? "",
       clienteId: l.clienteId ?? "",
@@ -102,15 +109,16 @@ export default function FaturamentoEditor({
       seguro: l.seguro != null ? String(l.seguro) : "",
       adm: l.adm != null ? String(l.adm) : "",
     }));
-    return iniciais.length ? iniciais : [linhaVazia()];
+    return iniciais.length ? iniciais : [linhaVazia(placa)];
   });
   const [diarias, setDiarias] = useState<DiariaEditavel[]>(() => {
     const iniciais = diariasIniciais.map((d) => ({
       data: d.data ?? "",
+      placa: d.placa ?? placa,
       descricao: d.descricao ?? "",
       valor: d.valor != null ? String(d.valor) : "",
     }));
-    return iniciais.length ? iniciais : [diariaVazia()];
+    return iniciais.length ? iniciais : [diariaVazia(placa)];
   });
   const [isPending, startTransition] = useTransition();
   const [mensagem, setMensagem] = useState("");
@@ -122,11 +130,11 @@ export default function FaturamentoEditor({
   }
 
   function adicionarLinha() {
-    setLinhas((prev) => [...prev, linhaVazia()]);
+    setLinhas((prev) => [...prev, linhaVazia(placa)]);
   }
 
   function removerLinha(idx: number) {
-    setLinhas((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : [linhaVazia()]));
+    setLinhas((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : [linhaVazia(placa)]));
   }
 
   function atualizarCelulaDiaria(idx: number, campo: keyof DiariaEditavel, valor: string) {
@@ -134,11 +142,11 @@ export default function FaturamentoEditor({
   }
 
   function adicionarDiaria() {
-    setDiarias((prev) => [...prev, diariaVazia()]);
+    setDiarias((prev) => [...prev, diariaVazia(placa)]);
   }
 
   function removerDiaria(idx: number) {
-    setDiarias((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : [diariaVazia()]));
+    setDiarias((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : [diariaVazia(placa)]));
   }
 
   const calculadas = useMemo(
@@ -178,6 +186,7 @@ export default function FaturamentoEditor({
 
   const headersExport = [
     "Data",
+    "Placa",
     "Descrição",
     "CTE",
     "Cliente",
@@ -194,6 +203,7 @@ export default function FaturamentoEditor({
   function linhasExport(): (string | number)[][] {
     return linhas.map((l, idx) => [
       l.data,
+      l.placa,
       l.descricao,
       l.cte,
       l.clienteId ? clienteMap.get(l.clienteId) ?? "" : "",
@@ -209,7 +219,7 @@ export default function FaturamentoEditor({
   }
 
   function diariasExport(): (string | number)[][] {
-    return diarias.map((d) => [d.data, d.descricao, num(d.valor)]);
+    return diarias.map((d) => [d.data, d.placa, d.descricao, num(d.valor)]);
   }
 
   function tituloExport() {
@@ -229,6 +239,7 @@ export default function FaturamentoEditor({
         "",
         "",
         "",
+        "",
         totais.vlrFrete,
         totais.despesas,
         totais.abastecimento,
@@ -243,9 +254,9 @@ export default function FaturamentoEditor({
       XLSX.utils.book_append_sheet(wb, ws, "Faturamento");
 
       const diariasRows = [
-        ["Data", "Descrição", "Valor"],
+        ["Data", "Placa", "Descrição", "Valor"],
         ...diariasExport(),
-        ["Total de diárias", "", totalDiarias],
+        ["Total de diárias", "", "", totalDiarias],
       ];
       const wsDiarias = XLSX.utils.aoa_to_sheet(diariasRows);
       XLSX.utils.book_append_sheet(wb, wsDiarias, "Diárias");
@@ -281,6 +292,7 @@ export default function FaturamentoEditor({
             "",
             "",
             "",
+            "",
             formatCurrency(totais.vlrFrete),
             formatCurrency(totais.despesas),
             formatCurrency(totais.abastecimento),
@@ -304,9 +316,9 @@ export default function FaturamentoEditor({
 
       autoTable(doc, {
         startY: finalY + 13,
-        head: [["Data", "Descrição", "Valor"]],
+        head: [["Data", "Placa", "Descrição", "Valor"]],
         body: diariasExport().map((row) => row.map((v) => (typeof v === "number" ? formatCurrency(v) : v))),
-        foot: [["Total de diárias", "", formatCurrency(totalDiarias)]],
+        foot: [["Total de diárias", "", "", formatCurrency(totalDiarias)]],
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [15, 23, 42], textColor: 255 },
         footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: "bold" },
@@ -323,7 +335,7 @@ export default function FaturamentoEditor({
   function handleSalvar() {
     const lancamentos: LancamentoInput[] = linhas.map((l) => ({
       data: l.data.trim() || null,
-      placa,
+      placa: l.placa || null,
       descricao: l.descricao.trim() || null,
       cte: l.cte.trim() || null,
       clienteId: l.clienteId || null,
@@ -337,6 +349,7 @@ export default function FaturamentoEditor({
 
     const diariasInput: DiariaInput[] = diarias.map((d) => ({
       data: d.data.trim() || null,
+      placa: d.placa || null,
       descricao: d.descricao.trim() || null,
       valor: d.valor.trim() ? num(d.valor) : null,
     }));
@@ -355,6 +368,7 @@ export default function FaturamentoEditor({
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
               <th className="px-3 py-2 font-medium min-w-[110px]">Data</th>
+              <th className="px-3 py-2 font-medium min-w-[110px]">Placa</th>
               <th className="px-3 py-2 font-medium min-w-[220px]">Descrição</th>
               <th className="px-3 py-2 font-medium min-w-[100px]">CTE</th>
               <th className="px-3 py-2 font-medium min-w-[170px]">Cliente</th>
@@ -373,6 +387,20 @@ export default function FaturamentoEditor({
             {linhas.map((l, idx) => (
               <tr key={idx} className="border-b border-slate-50 last:border-0">
                 <Cell value={l.data} onChange={(v) => atualizarCelula(idx, "data", v)} placeholder="dd/mm/aaaa" />
+                <td className="px-1 py-1">
+                  <select
+                    value={l.placa}
+                    onChange={(e) => atualizarCelula(idx, "placa", e.target.value)}
+                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option value="">— Selecionar —</option>
+                    {placasCavalo.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <Cell value={l.descricao} onChange={(v) => atualizarCelula(idx, "descricao", v)} placeholder="Origem X Destino" />
                 <Cell value={l.cte} onChange={(v) => atualizarCelula(idx, "cte", v)} />
                 <td className="px-1 py-1">
@@ -417,7 +445,7 @@ export default function FaturamentoEditor({
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
-              <td className="px-3 py-2" colSpan={4}>
+              <td className="px-3 py-2" colSpan={5}>
                 Total ({linhas.length} lançamento{linhas.length === 1 ? "" : "s"})
               </td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.vlrFrete)}</td>
@@ -442,6 +470,7 @@ export default function FaturamentoEditor({
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
               <th className="px-3 py-2 font-medium min-w-[110px]">Data</th>
+              <th className="px-3 py-2 font-medium min-w-[110px]">Placa</th>
               <th className="px-3 py-2 font-medium min-w-[280px]">Descrição</th>
               <th className="px-3 py-2 font-medium min-w-[130px]">Valor</th>
               <th className="px-3 py-2"></th>
@@ -451,6 +480,20 @@ export default function FaturamentoEditor({
             {diarias.map((d, idx) => (
               <tr key={idx} className="border-b border-slate-50 last:border-0">
                 <Cell value={d.data} onChange={(v) => atualizarCelulaDiaria(idx, "data", v)} placeholder="dd/mm/aaaa" />
+                <td className="px-1 py-1">
+                  <select
+                    value={d.placa}
+                    onChange={(e) => atualizarCelulaDiaria(idx, "placa", e.target.value)}
+                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option value="">— Selecionar —</option>
+                    {placasCavalo.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <Cell value={d.descricao} onChange={(v) => atualizarCelulaDiaria(idx, "descricao", v)} placeholder="Descrição" />
                 <Cell value={d.valor} onChange={(v) => atualizarCelulaDiaria(idx, "valor", v)} numeric />
                 <td className="px-2 py-1 text-right">
@@ -469,7 +512,7 @@ export default function FaturamentoEditor({
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
-              <td className="px-3 py-2" colSpan={2}>
+              <td className="px-3 py-2" colSpan={3}>
                 Total de diárias
               </td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totalDiarias)}</td>

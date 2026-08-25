@@ -3,12 +3,11 @@ import { Wallet, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import SortableTh from "@/components/SortableTh";
 
-const SORT_FIELDS = ["nome", "placa"] as const;
+const SORT_FIELDS = ["nome"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
 
 function getOrderBy(sort: string | undefined, dir: "asc" | "desc") {
   const field: SortField = SORT_FIELDS.includes(sort as SortField) ? (sort as SortField) : "nome";
-  if (field === "placa") return { veiculo: { placa: dir } } as const;
   return { [field]: dir } as const;
 }
 
@@ -81,7 +80,6 @@ export default async function FaturamentoPage({
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
               <SortableTh label="Motorista" sortKey="nome" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
-              <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               <th className="px-4 py-3 text-right">Faturar</th>
             </tr>
           </thead>
@@ -92,15 +90,6 @@ export default async function FaturamentoPage({
                   <Link href={`/motoristas/${m.id}`} className="font-medium text-brand-600 hover:underline">
                     {m.nome}
                   </Link>
-                </td>
-                <td className="px-4 py-3">
-                  {m.veiculo ? (
-                    <Link href={`/veiculos/${m.veiculo.id}`} className="font-medium text-brand-600 hover:underline">
-                      {m.veiculo.placa}
-                    </Link>
-                  ) : (
-                    <span className="text-slate-400">Sem placa vinculada</span>
-                  )}
                 </td>
                 <td className="px-4 py-3 text-right">
                   {m.veiculo && (
@@ -118,7 +107,7 @@ export default async function FaturamentoPage({
             ))}
             {motoristas.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={2} className="px-4 py-8 text-center text-slate-400">
                   Nenhum motorista encontrado.
                 </td>
               </tr>
