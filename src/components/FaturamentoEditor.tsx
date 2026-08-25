@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Plus, Save, FileSpreadsheet, FileText, Trash2 } from "lucide-react";
+import { Plus, Save, FileSpreadsheet, FileText, Trash2, X } from "lucide-react";
 import { salvarFaturamento, type LancamentoInput, type DiariaInput } from "@/app/(app)/faturamento/actions";
+import { criarClienteRapido } from "@/app/(app)/faturamento/clientes/actions";
 import { formatCurrency } from "@/lib/format";
 
 type LinhaEditavel = {
@@ -124,6 +125,27 @@ export default function FaturamentoEditor({
   const [mensagem, setMensagem] = useState("");
   const [gerandoExcel, setGerandoExcel] = useState(false);
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [clientesLista, setClientesLista] = useState(clientes);
+  const [novoClienteLinha, setNovoClienteLinha] = useState<number | null>(null);
+  const [novoClienteNome, setNovoClienteNome] = useState("");
+  const [criandoCliente, setCriandoCliente] = useState(false);
+
+  async function handleCriarCliente() {
+    const nome = novoClienteNome.trim();
+    if (!nome || novoClienteLinha === null) return;
+    setCriandoCliente(true);
+    try {
+      const cliente = await criarClienteRapido(nome);
+      setClientesLista((prev) => [...prev, cliente].sort((a, b) => a.nome.localeCompare(b.nome)));
+      atualizarCelula(novoClienteLinha, "clienteId", cliente.id);
+      setNovoClienteLinha(null);
+      setNovoClienteNome("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erro ao criar cliente.");
+    } finally {
+      setCriandoCliente(false);
+    }
+  }
 
   function atualizarCelula(idx: number, campo: keyof LinhaEditavel, valor: string) {
     setLinhas((prev) => prev.map((l, i) => (i === idx ? { ...l, [campo]: valor } : l)));
@@ -182,7 +204,7 @@ export default function FaturamentoEditor({
 
   const totalDiarias = useMemo(() => diarias.reduce((acc, d) => acc + num(d.valor), 0), [diarias]);
 
-  const clienteMap = useMemo(() => new Map(clientes.map((c) => [c.id, c.nome])), [clientes]);
+  const clienteMap = useMemo(() => new Map(clientesLista.map((c) => [c.id, c.nome])), [clientesLista]);
 
   const headersExport = [
     "Data",
@@ -404,18 +426,32 @@ export default function FaturamentoEditor({
                 <Cell value={l.descricao} onChange={(v) => atualizarCelula(idx, "descricao", v)} placeholder="Origem X Destino" />
                 <Cell value={l.cte} onChange={(v) => atualizarCelula(idx, "cte", v)} />
                 <td className="px-1 py-1">
-                  <select
-                    value={l.clienteId}
-                    onChange={(e) => atualizarCelula(idx, "clienteId", e.target.value)}
-                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  >
-                    <option value="">— Selecionar —</option>
-                    {clientes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nome}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={l.clienteId}
+                      onChange={(e) => atualizarCelula(idx, "clienteId", e.target.value)}
+                      className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    >
+                      <option value="">— Selecionar —</option>
+                      {clientesLista.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNovoClienteLinha(idx);
+                        setNovoClienteNome("");
+                      }}
+                      title="Criar novo cliente"
+                      aria-label="Criar novo cliente"
+                      className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-brand-600"
+                    >
+                      <Plus size={14} strokeWidth={2.5} />
+                    </button>
+                  </div>
                 </td>
                 <Cell value={l.vlrFrete} onChange={(v) => atualizarCelula(idx, "vlrFrete", v)} numeric />
                 <Cell value={l.despesas} onChange={(v) => atualizarCelula(idx, "despesas", v)} numeric />
@@ -570,6 +606,55 @@ export default function FaturamentoEditor({
         </button>
         {mensagem && <span className="text-sm text-success-600 font-medium">{mensagem}</span>}
       </div>
+
+      {novoClienteLinha !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-lg w-full max-w-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-slate-900">Novo cliente</h3>
+              <button
+                type="button"
+                onClick={() => setNovoClienteLinha(null)}
+                aria-label="Fechar"
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X size={18} strokeWidth={2} />
+              </button>
+            </div>
+            <label className="text-sm block mb-4">
+              <span className="block font-medium text-slate-700 mb-1">Nome</span>
+              <input
+                type="text"
+                autoFocus
+                value={novoClienteNome}
+                onChange={(e) => setNovoClienteNome(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCriarCliente();
+                }}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="Nome do cliente"
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setNovoClienteLinha(null)}
+                className="text-slate-600 hover:bg-slate-100 text-sm font-medium rounded-lg px-4 py-2"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCriarCliente}
+                disabled={criandoCliente || !novoClienteNome.trim()}
+                className="bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2"
+              >
+                {criandoCliente ? "Criando..." : "Criar cliente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

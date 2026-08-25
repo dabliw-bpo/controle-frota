@@ -44,6 +44,18 @@ export async function criarCliente(formData: FormData) {
   redirect(`/faturamento/clientes/${cliente.id}`);
 }
 
+export async function criarClienteRapido(nome: string): Promise<{ id: string; nome: string }> {
+  await requireEditor();
+
+  const nomeTrim = nome.trim();
+  if (!nomeTrim) throw new Error("Nome é obrigatório.");
+
+  const cliente = await prisma.cliente.create({ data: { nome: nomeTrim } });
+
+  revalidatePath("/faturamento/clientes");
+  return { id: cliente.id, nome: cliente.nome };
+}
+
 export async function atualizarCliente(clienteId: string, formData: FormData) {
   await requireEditor();
 
