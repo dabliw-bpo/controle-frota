@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wallet, Plus } from "lucide-react";
+import { Wallet, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import SortableTh from "@/components/SortableTh";
 
@@ -45,13 +45,22 @@ export default async function FaturamentoPage({
             {motoristas.length} motorista(s) · {comPlaca} com placa vinculada
           </p>
         </div>
-        <Link
-          href="/faturamento/novo"
-          className="inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          Novo faturamento
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/faturamento/clientes"
+            className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-medium rounded-lg px-4 py-2.5"
+          >
+            <Users size={16} strokeWidth={2} />
+            Clientes
+          </Link>
+          <Link
+            href="/faturamento/novo"
+            className="inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            Novo faturamento
+          </Link>
+        </div>
       </div>
 
       <form className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200">

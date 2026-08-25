@@ -17,6 +17,7 @@ export type LancamentoInput = {
   placa: string | null;
   descricao: string | null;
   cte: string | null;
+  clienteId: string | null;
   vlrFrete: number | null;
   despesas: number | null;
   abastecimento: number | null;
@@ -85,6 +86,7 @@ export async function salvarFaturamento(input: {
               placa: l.placa,
               descricao: l.descricao,
               cte: l.cte,
+              clienteId: l.clienteId,
               vlrFrete: l.vlrFrete,
               despesas: l.despesas,
               abastecimento: l.abastecimento,

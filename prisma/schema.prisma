@@ -215,6 +215,8 @@ model FaturamentoLancamento {
   placa         String? // placa do caminhão que rodou (pode diferir do veículo dono do faturamento)
   descricao     String?
   cte           String?
+  clienteId     String?
+  cliente       Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   vlrFrete      Float?
   despesas      Float?
   abastecimento Float?
@@ -223,6 +225,21 @@ model FaturamentoLancamento {
   adm           Float?
 
   createdAt     DateTime @default(now())
+}
+
+model Cliente {
+  id          String   @id @default(cuid())
+  nome        String
+  cnpj        String?  @unique
+  cidade      String?
+  uf          String?
+  telefone    String?
+  observacoes String?
+
+  lancamentos FaturamentoLancamento[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model FaturamentoDiaria {

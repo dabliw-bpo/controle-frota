@@ -9,6 +9,7 @@ type LinhaEditavel = {
   data: string;
   descricao: string;
   cte: string;
+  clienteId: string;
   vlrFrete: string;
   despesas: string;
   abastecimento: string;
@@ -30,6 +31,7 @@ function linhaVazia(): LinhaEditavel {
     data: "",
     descricao: "",
     cte: "",
+    clienteId: "",
     vlrFrete: "",
     despesas: "",
     abastecimento: "",
@@ -58,6 +60,7 @@ export default function FaturamentoEditor({
   motoristaId,
   lancamentosIniciais,
   diariasIniciais,
+  clientes,
 }: {
   veiculoId: string;
   ano: number;
@@ -71,6 +74,7 @@ export default function FaturamentoEditor({
     placa?: string | null;
     descricao: string | null;
     cte: string | null;
+    clienteId?: string | null;
     vlrFrete: number | null;
     despesas: number | null;
     abastecimento: number | null;
@@ -83,12 +87,14 @@ export default function FaturamentoEditor({
     descricao: string | null;
     valor: number | null;
   }[];
+  clientes: { id: string; nome: string }[];
 }) {
   const [linhas, setLinhas] = useState<LinhaEditavel[]>(() => {
     const iniciais = lancamentosIniciais.map((l) => ({
       data: l.data ?? "",
       descricao: l.descricao ?? "",
       cte: l.cte ?? "",
+      clienteId: l.clienteId ?? "",
       vlrFrete: l.vlrFrete != null ? String(l.vlrFrete) : "",
       despesas: l.despesas != null ? String(l.despesas) : "",
       abastecimento: l.abastecimento != null ? String(l.abastecimento) : "",
@@ -168,10 +174,13 @@ export default function FaturamentoEditor({
 
   const totalDiarias = useMemo(() => diarias.reduce((acc, d) => acc + num(d.valor), 0), [diarias]);
 
+  const clienteMap = useMemo(() => new Map(clientes.map((c) => [c.id, c.nome])), [clientes]);
+
   const headersExport = [
     "Data",
     "Descrição",
     "CTE",
+    "Cliente",
     "Vlr. Frete",
     "Despesas",
     "Abastecimento",
@@ -187,6 +196,7 @@ export default function FaturamentoEditor({
       l.data,
       l.descricao,
       l.cte,
+      l.clienteId ? clienteMap.get(l.clienteId) ?? "" : "",
       calculadas[idx].vlrFrete,
       calculadas[idx].despesas,
       calculadas[idx].abastecimento,
@@ -216,6 +226,7 @@ export default function FaturamentoEditor({
       const XLSX = await import("xlsx");
       const rows = [headersExport, ...linhasExport(), [
         `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
+        "",
         "",
         "",
         totais.vlrFrete,
@@ -269,6 +280,7 @@ export default function FaturamentoEditor({
             `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
             "",
             "",
+            "",
             formatCurrency(totais.vlrFrete),
             formatCurrency(totais.despesas),
             formatCurrency(totais.abastecimento),
@@ -314,6 +326,7 @@ export default function FaturamentoEditor({
       placa,
       descricao: l.descricao.trim() || null,
       cte: l.cte.trim() || null,
+      clienteId: l.clienteId || null,
       vlrFrete: l.vlrFrete.trim() ? num(l.vlrFrete) : null,
       despesas: l.despesas.trim() ? num(l.despesas) : null,
       abastecimento: l.abastecimento.trim() ? num(l.abastecimento) : null,
@@ -344,6 +357,7 @@ export default function FaturamentoEditor({
               <th className="px-3 py-2 font-medium min-w-[110px]">Data</th>
               <th className="px-3 py-2 font-medium min-w-[220px]">Descrição</th>
               <th className="px-3 py-2 font-medium min-w-[100px]">CTE</th>
+              <th className="px-3 py-2 font-medium min-w-[170px]">Cliente</th>
               <th className="px-3 py-2 font-medium min-w-[130px]">Vlr. Frete</th>
               <th className="px-3 py-2 font-medium min-w-[110px]">Despesas</th>
               <th className="px-3 py-2 font-medium min-w-[130px]">Abastecimento</th>
@@ -361,6 +375,20 @@ export default function FaturamentoEditor({
                 <Cell value={l.data} onChange={(v) => atualizarCelula(idx, "data", v)} placeholder="dd/mm/aaaa" />
                 <Cell value={l.descricao} onChange={(v) => atualizarCelula(idx, "descricao", v)} placeholder="Origem X Destino" />
                 <Cell value={l.cte} onChange={(v) => atualizarCelula(idx, "cte", v)} />
+                <td className="px-1 py-1">
+                  <select
+                    value={l.clienteId}
+                    onChange={(e) => atualizarCelula(idx, "clienteId", e.target.value)}
+                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option value="">— Selecionar —</option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <Cell value={l.vlrFrete} onChange={(v) => atualizarCelula(idx, "vlrFrete", v)} numeric />
                 <Cell value={l.despesas} onChange={(v) => atualizarCelula(idx, "despesas", v)} numeric />
                 <Cell value={l.abastecimento} onChange={(v) => atualizarCelula(idx, "abastecimento", v)} numeric />
@@ -389,7 +417,7 @@ export default function FaturamentoEditor({
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
-              <td className="px-3 py-2" colSpan={3}>
+              <td className="px-3 py-2" colSpan={4}>
                 Total ({linhas.length} lançamento{linhas.length === 1 ? "" : "s"})
               </td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.vlrFrete)}</td>
