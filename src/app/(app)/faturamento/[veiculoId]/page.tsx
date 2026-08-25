@@ -70,17 +70,19 @@ export default async function FaturamentoVeiculoPage({
         <Link href="/faturamento" className="text-sm text-brand-600 hover:underline">
           ← Voltar para Faturamento
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">Faturamento — {veiculo.placa}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mt-2">
+          Faturamento — {motoristaEfetivo?.nome ?? veiculo.placa}
+        </h1>
         <p className="text-slate-500 text-sm mt-1">
-          {veiculo.carroceria} · {veiculo.marcaModeloVersao || "sem modelo"}
-          {motoristaEfetivo && (
-            <>
-              {" · "}
-              <Link href={`/motoristas/${motoristaEfetivo.id}`} className="text-brand-600 hover:underline">
-                {motoristaEfetivo.nome}
-              </Link>
-            </>
+          {motoristaEfetivo ? (
+            <Link href={`/veiculos/${veiculo.id}`} className="text-brand-600 hover:underline">
+              {veiculo.placa}
+            </Link>
+          ) : (
+            veiculo.placa
           )}
+          {" · "}
+          {veiculo.carroceria} · {veiculo.marcaModeloVersao || "sem modelo"}
         </p>
       </div>
 
