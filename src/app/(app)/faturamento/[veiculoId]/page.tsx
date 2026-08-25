@@ -73,17 +73,6 @@ export default async function FaturamentoVeiculoPage({
         <h1 className="text-2xl font-bold text-slate-900 mt-2">
           Faturamento — {motoristaEfetivo?.nome ?? veiculo.placa}
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          {motoristaEfetivo ? (
-            <Link href={`/veiculos/${veiculo.id}`} className="text-brand-600 hover:underline">
-              {veiculo.placa}
-            </Link>
-          ) : (
-            veiculo.placa
-          )}
-          {" · "}
-          {veiculo.carroceria} · {veiculo.marcaModeloVersao || "sem modelo"}
-        </p>
       </div>
 
       <form className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-slate-200 items-end">
