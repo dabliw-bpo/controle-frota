@@ -15,8 +15,8 @@ export default async function NovaMultaPage() {
         <Link href="/multas" className="text-sm text-brand-600 hover:underline">
           ← Voltar para Multas
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">Nova multa</h1>
-        <p className="text-slate-500 text-sm mt-1">Registre uma multa de trânsito</p>
+        <h1 className="text-2xl font-bold text-slate-900 mt-2">Nova multa / licenciamento</h1>
+        <p className="text-slate-500 text-sm mt-1">Registre uma multa de trânsito ou um licenciamento</p>
       </div>
 
       <MultaForm action={criarMulta} veiculos={veiculos} motoristas={motoristas} submitLabel="Cadastrar multa" />

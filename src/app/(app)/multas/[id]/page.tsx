@@ -25,12 +25,14 @@ export default async function MultaDetalhePage({ params }: { params: { id: strin
 
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Multa — {multa.veiculo.placa}</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {multa.tipo === "LICENCIAMENTO" ? "Licenciamento" : "Multa"} — {multa.veiculo.placa}
+          </h1>
           <p className="text-slate-500 text-sm mt-1">{multa.motorista?.nome ?? "Sem motorista vinculado"}</p>
         </div>
         <form action={excluirAction}>
           <button className="text-sm text-red-600 hover:bg-red-50 border border-red-200 rounded-lg px-3 py-2 whitespace-nowrap">
-            Excluir multa
+            Excluir
           </button>
         </form>
       </div>
@@ -43,6 +45,7 @@ export default async function MultaDetalhePage({ params }: { params: { id: strin
         initial={{
           veiculoId: multa.veiculoId,
           motoristaId: multa.motoristaId,
+          tipo: multa.tipo,
           data: multa.data,
           descricao: multa.descricao,
           valor: multa.valor,

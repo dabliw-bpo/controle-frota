@@ -18,28 +18,35 @@ function getOrderBy(sort: string | undefined, dir: "asc" | "desc") {
 export default async function MultasPage({
   searchParams,
 }: {
-  searchParams: { q?: string; sort?: string; dir?: string };
+  searchParams: { q?: string; sort?: string; dir?: string; tipo?: string };
 }) {
   const q = searchParams.q?.trim() || "";
   const dir: "asc" | "desc" = searchParams.dir === "desc" ? "desc" : "asc";
+  const tipo = searchParams.tipo === "MULTA" || searchParams.tipo === "LICENCIAMENTO" ? searchParams.tipo : "";
 
   const multas = await prisma.multa.findMany({
-    where: q
-      ? {
-          OR: [
-            { veiculo: { placa: { contains: q, mode: "insensitive" } } },
-            { motorista: { nome: { contains: q, mode: "insensitive" } } },
-            { descricao: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {},
+    where: {
+      ...(tipo ? { tipo } : {}),
+      ...(q
+        ? {
+            OR: [
+              { veiculo: { placa: { contains: q, mode: "insensitive" } } },
+              { motorista: { nome: { contains: q, mode: "insensitive" } } },
+              { descricao: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     include: { veiculo: true, motorista: true },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
 
+  const totalMultas = multas.filter((m) => m.tipo === "MULTA").length;
+  const totalLicenciamentos = multas.filter((m) => m.tipo === "LICENCIAMENTO").length;
   const totalDescontar = multas.filter((m) => m.descontarMotorista).length;
-  const subtitle = `${multas.length} multa(s) · ${totalDescontar} a descontar do motorista`;
+  const subtitle = `${totalMultas} multa(s) · ${totalLicenciamentos} licenciamento(s) · ${totalDescontar} a descontar do motorista`;
   const exportRows = multas.map((m) => ({
+    tipo: m.tipo === "LICENCIAMENTO" ? "Licenciamento" : "Multa",
     data: m.data || "—",
     placa: m.veiculo.placa,
     motorista: m.motorista?.nome ?? "—",
@@ -75,6 +82,11 @@ export default async function MultasPage({
           placeholder="Buscar por placa, motorista ou descrição..."
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
+        <select name="tipo" defaultValue={tipo} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">Todos os tipos</option>
+          <option value="MULTA">Multa</option>
+          <option value="LICENCIAMENTO">Licenciamento</option>
+        </select>
         <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
         </button>
@@ -84,6 +96,7 @@ export default async function MultasPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
+              <th className="px-4 py-3 font-medium">Tipo</th>
               <SortableTh label="Data" sortKey="data" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
@@ -95,6 +108,17 @@ export default async function MultasPage({
           <tbody>
             {multas.map((m) => (
               <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                <td className="px-4 py-3">
+                  {m.tipo === "LICENCIAMENTO" ? (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
+                      Licenciamento
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800">
+                      Multa
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{m.data || "—"}</td>
                 <td className="px-4 py-3">
                   <Link href={`/multas/${m.id}`} className="font-medium text-brand-600 hover:underline">
@@ -121,8 +145,8 @@ export default async function MultasPage({
             ))}
             {multas.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                  Nenhuma multa registrada.
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                  Nenhum registro encontrado.
                 </td>
               </tr>
             )}

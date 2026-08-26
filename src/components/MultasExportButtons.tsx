@@ -5,6 +5,7 @@ import { FileSpreadsheet, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 
 export type MultaExportRow = {
+  tipo: string;
   data: string;
   placa: string;
   motorista: string;
@@ -13,10 +14,11 @@ export type MultaExportRow = {
   descontarMotorista: boolean;
 };
 
-const HEADERS = ["Data", "Placa", "Motorista", "Descrição", "Valor", "Desconta do motorista"];
+const HEADERS = ["Tipo", "Data", "Placa", "Motorista", "Descrição", "Valor", "Desconta do motorista"];
 
 function linhasExport(rows: MultaExportRow[]): (string | number)[][] {
   return rows.map((r) => [
+    r.tipo,
     r.data,
     r.placa,
     r.motorista,
@@ -69,7 +71,7 @@ export default function MultasExportButtons({
         startY: 26,
         head: [HEADERS],
         body: linhasExport(rows).map((row) =>
-          row.map((v, i) => (i === 4 && typeof v === "number" ? formatCurrency(v) : v))
+          row.map((v, i) => (i === 5 && typeof v === "number" ? formatCurrency(v) : v))
         ),
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [15, 23, 42], textColor: 255 },
