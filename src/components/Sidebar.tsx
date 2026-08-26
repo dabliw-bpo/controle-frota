@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { ROLE_LABELS, Role } from "@/lib/constants";
 import { formatCpf } from "@/lib/cpf";
@@ -23,6 +24,7 @@ const NAV = [
   { href: "/veiculos", label: "Veículos", icon: Truck },
   { href: "/motoristas", label: "Motoristas", icon: Users },
   { href: "/faturamento", label: "Faturamento", icon: Wallet },
+  { href: "/multas", label: "Multas de Trânsito", icon: ShieldAlert },
   // IPVA / Licenciamento: oculto do menu a pedido, rota continua ativa em /impostos
   { href: "/relatorios", label: "Relatórios", icon: FileText },
 ];

@@ -71,6 +71,7 @@ model Veiculo {
   locacao           Locacao?
   motoristasCadastrados Motorista[]
   faturamentosMensais FaturamentoMensal[]
+  multas            Multa[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -181,6 +182,7 @@ model Motorista {
   veiculo    Veiculo? @relation(fields: [veiculoId], references: [id], onDelete: SetNull)
 
   faturamentosMensais FaturamentoMensal[]
+  multas     Multa[]
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -300,4 +302,20 @@ model Locacao {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Multa {
+  id          String     @id @default(cuid())
+  veiculoId   String
+  veiculo     Veiculo    @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+  motoristaId String?
+  motorista   Motorista? @relation(fields: [motoristaId], references: [id], onDelete: SetNull)
+
+  data               String? // data da infração, dd/mm/aaaa
+  descricao          String
+  valor              Float?
+  descontarMotorista Boolean @default(false) // se a multa será descontada do motorista
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
