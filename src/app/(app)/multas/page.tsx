@@ -12,7 +12,26 @@ function getOrderBy(sort: string | undefined, dir: "asc" | "desc") {
   const field: SortField = SORT_FIELDS.includes(sort as SortField) ? (sort as SortField) : "data";
   if (field === "placa") return { veiculo: { placa: dir } } as const;
   if (field === "motorista") return { motorista: { nome: dir } } as const;
+  // "data" é um texto livre dd/mm/aaaa (não um Date real no banco), então não dá
+  // para ordenar corretamente via SQL — buscamos por criação e reordenamos em JS abaixo.
   return { createdAt: dir } as const;
+}
+
+// Converte "dd/mm/aaaa" em um número comparável (aaaammdd); retorna null se vazio/inválido.
+function parseDataBr(data: string | null): number | null {
+  const m = data?.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, dd, mm, aaaa] = m;
+  return Number(aaaa) * 10000 + Number(mm) * 100 + Number(dd);
+}
+
+function compareData(a: { data: string | null }, b: { data: string | null }, mult: 1 | -1): number {
+  const da = parseDataBr(a.data);
+  const db = parseDataBr(b.data);
+  if (da === null && db === null) return 0;
+  if (da === null) return 1; // datas ausentes/ inválidas sempre por último
+  if (db === null) return -1;
+  return mult * (da - db);
 }
 
 export default async function MultasPage({
@@ -24,7 +43,7 @@ export default async function MultasPage({
   const dir: "asc" | "desc" = searchParams.dir === "desc" ? "desc" : "asc";
   const tipo = searchParams.tipo === "MULTA" || searchParams.tipo === "LICENCIAMENTO" ? searchParams.tipo : "";
 
-  const multas = await prisma.multa.findMany({
+  let multas = await prisma.multa.findMany({
     where: {
       ...(tipo ? { tipo } : {}),
       ...(q
@@ -41,8 +60,20 @@ export default async function MultasPage({
     orderBy: getOrderBy(searchParams.sort, dir),
   });
 
-  const totalMultas = multas.filter((m) => m.tipo === "MULTA").length;
-  const totalLicenciamentos = multas.filter((m) => m.tipo === "LICENCIAMENTO").length;
+  const sortField: SortField = SORT_FIELDS.includes(searchParams.sort as SortField)
+    ? (searchParams.sort as SortField)
+    : "data";
+  if (sortField === "data") {
+    const mult = dir === "asc" ? 1 : -1;
+    multas = [...multas].sort((a, b) => compareData(a, b, mult));
+  }
+
+  const multasDoTipo = multas.filter((m) => m.tipo === "MULTA");
+  const licenciamentosDoTipo = multas.filter((m) => m.tipo === "LICENCIAMENTO");
+  const somaMultas = multasDoTipo.reduce((acc, m) => acc + (m.valor ?? 0), 0);
+  const somaLicenciamentos = licenciamentosDoTipo.reduce((acc, m) => acc + (m.valor ?? 0), 0);
+  const totalMultas = multasDoTipo.length;
+  const totalLicenciamentos = licenciamentosDoTipo.length;
   const totalDescontar = multas.filter((m) => m.descontarMotorista).length;
   const subtitle = `${totalMultas} multa(s) · ${totalLicenciamentos} licenciamento(s) · ${totalDescontar} a descontar do motorista`;
   const exportRows = multas.map((m) => ({
@@ -151,6 +182,31 @@ export default async function MultasPage({
               </tr>
             )}
           </tbody>
+          {multas.length > 0 && (
+            <tfoot>
+              <tr className="bg-slate-50 text-slate-700 border-t border-slate-200">
+                <td className="px-4 py-2.5" colSpan={5}>
+                  Total de multas ({totalMultas})
+                </td>
+                <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaMultas)}</td>
+                <td></td>
+              </tr>
+              <tr className="bg-slate-50 text-slate-700 border-t border-slate-100">
+                <td className="px-4 py-2.5" colSpan={5}>
+                  Total de licenciamentos ({totalLicenciamentos})
+                </td>
+                <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaLicenciamentos)}</td>
+                <td></td>
+              </tr>
+              <tr className="bg-slate-100 font-semibold text-slate-900 border-t border-slate-200">
+                <td className="px-4 py-3" colSpan={5}>
+                  Total geral ({multas.length})
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">{formatCurrency(somaMultas + somaLicenciamentos)}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>
