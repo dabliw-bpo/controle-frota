@@ -8,8 +8,10 @@ export type MultaExportRow = {
   tipo: string;
   data: string;
   placa: string;
+  empresa: string;
   motorista: string;
   descricao: string;
+  codigoBarras: string;
   valor: number | null;
   descontarMotorista: boolean;
 };
@@ -30,7 +32,17 @@ export type AbcExportRow = {
   classe: "A" | "B" | "C";
 };
 
-const HEADERS = ["Tipo", "Data", "Placa", "Motorista", "Descrição", "Valor", "Desconta do motorista"];
+const HEADERS = [
+  "Tipo",
+  "Data",
+  "Placa",
+  "Empresa",
+  "Motorista",
+  "Descrição",
+  "Código de Barras",
+  "Valor",
+  "Desconta do motorista",
+];
 const HEADERS_VENCIMENTO = ["Data de Vencimento", "Multa", "Licenciamento", "Total", "Qtd. Registros"];
 const HEADERS_ABC = ["#", "Placa", "Despesa", "% do total", "% Acumulado", "Classe"];
 
@@ -39,8 +51,10 @@ function linhasExport(rows: MultaExportRow[]): (string | number)[][] {
     r.tipo,
     r.data,
     r.placa,
+    r.empresa,
     r.motorista,
     r.descricao,
+    r.codigoBarras,
     r.valor ?? 0,
     r.descontarMotorista ? "Sim" : "Não",
   ]);
@@ -116,7 +130,7 @@ export default function MultasExportButtons({
         startY: 26,
         head: [HEADERS],
         body: linhasExport(rows).map((row) =>
-          row.map((v, i) => (i === 5 && typeof v === "number" ? formatCurrency(v) : v))
+          row.map((v, i) => (i === 7 && typeof v === "number" ? formatCurrency(v) : v))
         ),
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [15, 23, 42], textColor: 255 },

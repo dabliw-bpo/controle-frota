@@ -50,6 +50,7 @@ export default async function MultaDetalhePage({ params }: { params: { id: strin
           descricao: multa.descricao,
           valor: multa.valor,
           descontarMotorista: multa.descontarMotorista,
+          codigoBarras: multa.codigoBarras,
         }}
       />
     </div>

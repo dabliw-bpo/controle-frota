@@ -52,13 +52,15 @@ export default async function MultasPage({
         ? {
             OR: [
               { veiculo: { placa: { contains: q, mode: "insensitive" } } },
+              { veiculo: { empresa: { nome: { contains: q, mode: "insensitive" } } } },
+              { veiculo: { responsavelTexto: { contains: q, mode: "insensitive" } } },
               { motorista: { nome: { contains: q, mode: "insensitive" } } },
               { descricao: { contains: q, mode: "insensitive" } },
             ],
           }
         : {}),
     },
-    include: { veiculo: true, motorista: true },
+    include: { veiculo: { include: { empresa: true } }, motorista: true },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
 
@@ -82,8 +84,10 @@ export default async function MultasPage({
     tipo: m.tipo === "LICENCIAMENTO" ? "Licenciamento" : "Multa",
     data: m.data || "—",
     placa: m.veiculo.placa,
+    empresa: m.veiculo.empresa?.nome ?? m.veiculo.responsavelTexto ?? "—",
     motorista: m.motorista?.nome ?? "—",
     descricao: m.descricao,
+    codigoBarras: m.codigoBarras || "—",
     valor: m.valor,
     descontarMotorista: m.descontarMotorista,
   }));
@@ -186,8 +190,10 @@ export default async function MultasPage({
               <th className="px-4 py-3 font-medium">Tipo</th>
               <SortableTh label="Data" sortKey="data" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+              <th className="px-4 py-3 font-medium">Empresa</th>
               <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               <th className="px-4 py-3 font-medium">Descrição</th>
+              <th className="px-4 py-3 font-medium">Código de Barras</th>
               <th className="px-4 py-3 font-medium">Valor</th>
               <th className="px-4 py-3 font-medium">Desconto</th>
             </tr>
@@ -212,9 +218,13 @@ export default async function MultasPage({
                     {m.veiculo.placa}
                   </Link>
                 </td>
+                <td className="px-4 py-3 text-slate-600">{m.veiculo.empresa?.nome ?? m.veiculo.responsavelTexto ?? "—"}</td>
                 <td className="px-4 py-3 text-slate-600">{m.motorista?.nome ?? "—"}</td>
                 <td className="px-4 py-3 text-slate-600 max-w-[320px] truncate" title={m.descricao}>
                   {m.descricao}
+                </td>
+                <td className="px-4 py-3 text-slate-500 font-mono text-xs whitespace-nowrap">
+                  {m.codigoBarras || "—"}
                 </td>
                 <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatCurrency(m.valor)}</td>
                 <td className="px-4 py-3">
@@ -232,7 +242,7 @@ export default async function MultasPage({
             ))}
             {multas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                   Nenhum registro encontrado.
                 </td>
               </tr>
@@ -241,21 +251,21 @@ export default async function MultasPage({
           {multas.length > 0 && (
             <tfoot>
               <tr className="bg-slate-50 text-slate-700 border-t border-slate-200">
-                <td className="px-4 py-2.5" colSpan={5}>
+                <td className="px-4 py-2.5" colSpan={7}>
                   Total de multas ({totalMultas})
                 </td>
                 <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaMultas)}</td>
                 <td></td>
               </tr>
               <tr className="bg-slate-50 text-slate-700 border-t border-slate-100">
-                <td className="px-4 py-2.5" colSpan={5}>
+                <td className="px-4 py-2.5" colSpan={7}>
                   Total de licenciamentos ({totalLicenciamentos})
                 </td>
                 <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaLicenciamentos)}</td>
                 <td></td>
               </tr>
               <tr className="bg-slate-100 font-semibold text-slate-900 border-t border-slate-200">
-                <td className="px-4 py-3" colSpan={5}>
+                <td className="px-4 py-3" colSpan={7}>
                   Total geral ({multas.length})
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">{formatCurrency(somaMultas + somaLicenciamentos)}</td>

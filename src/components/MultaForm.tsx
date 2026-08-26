@@ -6,6 +6,7 @@ type MultaFormValues = {
   descricao?: string | null;
   valor?: number | null;
   descontarMotorista?: boolean;
+  codigoBarras?: string | null;
 };
 
 export default function MultaForm({
@@ -63,6 +64,14 @@ export default function MultaForm({
               defaultValue={initial?.valor ?? ""}
               className="input"
               placeholder="0,00"
+            />
+          </Field>
+          <Field label="Código de barras">
+            <input
+              name="codigoBarras"
+              defaultValue={initial?.codigoBarras ?? ""}
+              className="input"
+              placeholder="Linha digitável do boleto/DAR"
             />
           </Field>
           <div className="sm:col-span-2 lg:col-span-3">
