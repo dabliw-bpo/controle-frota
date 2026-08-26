@@ -198,67 +198,79 @@ export default async function MultasPage({
       </form>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-[9%]" />
+            <col className="w-[8%]" />
+            <col className="w-[8%]" />
+            <col className="w-[13%]" />
+            <col className="w-[11%]" />
+            <col className="w-[15%]" />
+            <col className="w-[13%]" />
+            <col className="w-[8%]" />
+            <col className="w-[8%]" />
+            <col className="w-[7%]" />
+          </colgroup>
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
-              <th className="px-4 py-3 font-medium">Tipo</th>
+              <th className="px-2 py-3 font-medium">Tipo</th>
               <SortableTh label="Data" sortKey="data" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
-              <th className="px-4 py-3 font-medium">Empresa</th>
+              <th className="px-2 py-3 font-medium">Empresa</th>
               <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
-              <th className="px-4 py-3 font-medium">Descrição</th>
-              <th className="px-4 py-3 font-medium">Código de Barras</th>
-              <th className="px-4 py-3 font-medium">Valor</th>
-              <th className="px-4 py-3 font-medium">Desconto</th>
-              <th className="px-4 py-3 font-medium">Pago</th>
+              <th className="px-2 py-3 font-medium">Descrição</th>
+              <th className="px-2 py-3 font-medium">Código de Barras</th>
+              <th className="px-2 py-3 font-medium">Valor</th>
+              <th className="px-2 py-3 font-medium">Desconto</th>
+              <th className="px-2 py-3 font-medium">Pago</th>
             </tr>
           </thead>
           <tbody>
             {multas.map((m) => (
               <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-3">
+                <td className="px-2 py-3">
                   {m.tipo === "LICENCIAMENTO" ? (
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
                       Licenciamento
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800">
                       Multa
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{m.data || "—"}</td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 text-slate-600">{m.data || "—"}</td>
+                <td className="px-2 py-3 break-words">
                   <Link href={`/multas/${m.id}`} className="font-medium text-brand-600 hover:underline">
                     {m.veiculo.placa}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-slate-600">{m.veiculo.empresa?.nome ?? m.veiculo.responsavelTexto ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{m.motorista?.nome ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600 max-w-[320px] truncate" title={m.descricao}>
-                  {m.descricao}
+                <td className="px-2 py-3 text-slate-600 break-words">
+                  {m.veiculo.empresa?.nome ?? m.veiculo.responsavelTexto ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-slate-500 font-mono text-xs whitespace-nowrap">
+                <td className="px-2 py-3 text-slate-600 break-words">{m.motorista?.nome ?? "—"}</td>
+                <td className="px-2 py-3 text-slate-600 break-words">{m.descricao}</td>
+                <td className="px-2 py-3 text-slate-500 font-mono text-xs break-all">
                   {m.codigoBarras || "—"}
                 </td>
-                <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatCurrency(m.valor)}</td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 text-slate-600 break-words">{formatCurrency(m.valor)}</td>
+                <td className="px-2 py-3">
                   {m.descontarMotorista ? (
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-800">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800">
                       Desconta
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-100 text-slate-600">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600">
                       Não desconta
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3">
                   <form action={alternarPago.bind(null, m.id, !m.pago)}>
                     <button
                       type="submit"
                       title={m.pago ? "Marcar como pendente" : "Marcar como pago"}
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                         m.pago ? "bg-success-100 text-success-700" : "bg-slate-100 text-slate-500"
                       }`}
                     >
@@ -270,7 +282,7 @@ export default async function MultasPage({
             ))}
             {multas.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={10} className="px-2 py-8 text-center text-slate-400">
                   Nenhum registro encontrado.
                 </td>
               </tr>
@@ -279,24 +291,24 @@ export default async function MultasPage({
           {multas.length > 0 && (
             <tfoot>
               <tr className="bg-slate-50 text-slate-700 border-t border-slate-200">
-                <td className="px-4 py-2.5" colSpan={8}>
+                <td className="px-2 py-2.5" colSpan={8}>
                   Total de multas ({totalMultas})
                 </td>
-                <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaMultas)}</td>
+                <td className="px-2 py-2.5 break-words font-medium">{formatCurrency(somaMultas)}</td>
                 <td></td>
               </tr>
               <tr className="bg-slate-50 text-slate-700 border-t border-slate-100">
-                <td className="px-4 py-2.5" colSpan={8}>
+                <td className="px-2 py-2.5" colSpan={8}>
                   Total de licenciamentos ({totalLicenciamentos})
                 </td>
-                <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaLicenciamentos)}</td>
+                <td className="px-2 py-2.5 break-words font-medium">{formatCurrency(somaLicenciamentos)}</td>
                 <td></td>
               </tr>
               <tr className="bg-slate-100 font-semibold text-slate-900 border-t border-slate-200">
-                <td className="px-4 py-3" colSpan={8}>
+                <td className="px-2 py-3" colSpan={8}>
                   Total geral ({multasNaoPagas.length})
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">{formatCurrency(somaMultas + somaLicenciamentos)}</td>
+                <td className="px-2 py-3 break-words">{formatCurrency(somaMultas + somaLicenciamentos)}</td>
                 <td></td>
               </tr>
             </tfoot>
