@@ -6,6 +6,7 @@ import SortableTh from "@/components/SortableTh";
 import MultasExportButtons from "@/components/MultasExportButtons";
 import MultasVencimentoChart from "@/components/MultasVencimentoChart";
 import MultasCurvaAbc from "@/components/MultasCurvaAbc";
+import { alternarPago } from "./actions";
 
 const SORT_FIELDS = ["placa", "motorista", "data"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -39,15 +40,17 @@ function compareData(a: { data: string | null }, b: { data: string | null }, mul
 export default async function MultasPage({
   searchParams,
 }: {
-  searchParams: { q?: string; sort?: string; dir?: string; tipo?: string };
+  searchParams: { q?: string; sort?: string; dir?: string; tipo?: string; pago?: string };
 }) {
   const q = searchParams.q?.trim() || "";
   const dir: "asc" | "desc" = searchParams.dir === "desc" ? "desc" : "asc";
   const tipo = searchParams.tipo === "MULTA" || searchParams.tipo === "LICENCIAMENTO" ? searchParams.tipo : "";
+  const pagoFiltro = searchParams.pago === "PAGO" || searchParams.pago === "PENDENTE" ? searchParams.pago : "";
 
   let multas = await prisma.multa.findMany({
     where: {
       ...(tipo ? { tipo } : {}),
+      ...(pagoFiltro ? { pago: pagoFiltro === "PAGO" } : {}),
       ...(q
         ? {
             OR: [
@@ -72,14 +75,17 @@ export default async function MultasPage({
     multas = [...multas].sort((a, b) => compareData(a, b, mult));
   }
 
-  const multasDoTipo = multas.filter((m) => m.tipo === "MULTA");
-  const licenciamentosDoTipo = multas.filter((m) => m.tipo === "LICENCIAMENTO");
+  // Totais e dashboards desconsideram registros já pagos.
+  const multasNaoPagas = multas.filter((m) => !m.pago);
+  const multasDoTipo = multasNaoPagas.filter((m) => m.tipo === "MULTA");
+  const licenciamentosDoTipo = multasNaoPagas.filter((m) => m.tipo === "LICENCIAMENTO");
   const somaMultas = multasDoTipo.reduce((acc, m) => acc + (m.valor ?? 0), 0);
   const somaLicenciamentos = licenciamentosDoTipo.reduce((acc, m) => acc + (m.valor ?? 0), 0);
   const totalMultas = multasDoTipo.length;
   const totalLicenciamentos = licenciamentosDoTipo.length;
   const totalDescontar = multas.filter((m) => m.descontarMotorista).length;
-  const subtitle = `${totalMultas} multa(s) · ${totalLicenciamentos} licenciamento(s) · ${totalDescontar} a descontar do motorista`;
+  const totalPagos = multas.filter((m) => m.pago).length;
+  const subtitle = `${totalMultas} multa(s) · ${totalLicenciamentos} licenciamento(s) · ${totalDescontar} a descontar do motorista · ${totalPagos} pago(s) (fora dos totais)`;
   const exportRows = multas.map((m) => ({
     tipo: m.tipo === "LICENCIAMENTO" ? "Licenciamento" : "Multa",
     data: m.data || "—",
@@ -90,11 +96,12 @@ export default async function MultasPage({
     codigoBarras: m.codigoBarras || "—",
     valor: m.valor,
     descontarMotorista: m.descontarMotorista,
+    pago: m.pago,
   }));
 
-  // Dashboard: soma dos totais por data de vencimento.
+  // Dashboard: soma dos totais por data de vencimento (não considera registros pagos).
   const porVencimentoMap = new Map<string, { data: string; multa: number; licenciamento: number; qtd: number }>();
-  for (const m of multas) {
+  for (const m of multasNaoPagas) {
     const chave = m.data || "Sem data";
     const atual = porVencimentoMap.get(chave) ?? { data: chave, multa: 0, licenciamento: 0, qtd: 0 };
     const valor = m.valor ?? 0;
@@ -114,9 +121,9 @@ export default async function MultasPage({
       return da - db;
     });
 
-  // Dashboard: curva ABC de placas por despesa total (multa + licenciamento).
+  // Dashboard: curva ABC de placas por despesa total (multa + licenciamento; não considera pagos).
   const porPlacaMap = new Map<string, number>();
-  for (const m of multas) {
+  for (const m of multasNaoPagas) {
     const placa = m.veiculo.placa;
     porPlacaMap.set(placa, (porPlacaMap.get(placa) ?? 0) + (m.valor ?? 0));
   }
@@ -156,11 +163,13 @@ export default async function MultasPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">Total por data de vencimento</h2>
+          <h2 className="font-semibold text-slate-900 mb-1">Total por data de vencimento</h2>
+          <p className="text-xs text-slate-400 mb-4">Não considera registros já marcados como pagos.</p>
           <MultasVencimentoChart dados={porVencimento} />
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">Curva ABC de placas por despesa</h2>
+          <h2 className="font-semibold text-slate-900 mb-1">Curva ABC de placas por despesa</h2>
+          <p className="text-xs text-slate-400 mb-4">Não considera registros já marcados como pagos.</p>
           <MultasCurvaAbc linhas={curvaAbc} />
         </div>
       </div>
@@ -177,6 +186,11 @@ export default async function MultasPage({
           <option value="">Todos os tipos</option>
           <option value="MULTA">Multa</option>
           <option value="LICENCIAMENTO">Licenciamento</option>
+        </select>
+        <select name="pago" defaultValue={pagoFiltro} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">Pago e pendente</option>
+          <option value="PENDENTE">Somente pendentes</option>
+          <option value="PAGO">Somente pagos</option>
         </select>
         <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
@@ -196,6 +210,7 @@ export default async function MultasPage({
               <th className="px-4 py-3 font-medium">Código de Barras</th>
               <th className="px-4 py-3 font-medium">Valor</th>
               <th className="px-4 py-3 font-medium">Desconto</th>
+              <th className="px-4 py-3 font-medium">Pago</th>
             </tr>
           </thead>
           <tbody>
@@ -238,11 +253,24 @@ export default async function MultasPage({
                     </span>
                   )}
                 </td>
+                <td className="px-4 py-3">
+                  <form action={alternarPago.bind(null, m.id, !m.pago)}>
+                    <button
+                      type="submit"
+                      title={m.pago ? "Marcar como pendente" : "Marcar como pago"}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        m.pago ? "bg-success-100 text-success-700" : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {m.pago ? "Pago" : "Pendente"}
+                    </button>
+                  </form>
+                </td>
               </tr>
             ))}
             {multas.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={10} className="px-4 py-8 text-center text-slate-400">
                   Nenhum registro encontrado.
                 </td>
               </tr>
@@ -251,22 +279,22 @@ export default async function MultasPage({
           {multas.length > 0 && (
             <tfoot>
               <tr className="bg-slate-50 text-slate-700 border-t border-slate-200">
-                <td className="px-4 py-2.5" colSpan={7}>
+                <td className="px-4 py-2.5" colSpan={8}>
                   Total de multas ({totalMultas})
                 </td>
                 <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaMultas)}</td>
                 <td></td>
               </tr>
               <tr className="bg-slate-50 text-slate-700 border-t border-slate-100">
-                <td className="px-4 py-2.5" colSpan={7}>
+                <td className="px-4 py-2.5" colSpan={8}>
                   Total de licenciamentos ({totalLicenciamentos})
                 </td>
                 <td className="px-4 py-2.5 whitespace-nowrap font-medium">{formatCurrency(somaLicenciamentos)}</td>
                 <td></td>
               </tr>
               <tr className="bg-slate-100 font-semibold text-slate-900 border-t border-slate-200">
-                <td className="px-4 py-3" colSpan={7}>
-                  Total geral ({multas.length})
+                <td className="px-4 py-3" colSpan={8}>
+                  Total geral ({multasNaoPagas.length})
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">{formatCurrency(somaMultas + somaLicenciamentos)}</td>
                 <td></td>

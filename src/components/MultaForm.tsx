@@ -7,6 +7,7 @@ type MultaFormValues = {
   valor?: number | null;
   descontarMotorista?: boolean;
   codigoBarras?: string | null;
+  pago?: boolean;
 };
 
 export default function MultaForm({
@@ -95,6 +96,17 @@ export default function MultaForm({
                 className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
               />
               <span className="font-medium text-slate-700">Descontar valor da multa do motorista</span>
+            </label>
+          </div>
+          <div className="sm:col-span-2 lg:col-span-3">
+            <label className="flex items-center gap-2.5 text-sm">
+              <input
+                type="checkbox"
+                name="pago"
+                defaultChecked={initial?.pago ?? false}
+                className="rounded border-slate-300 text-success-600 focus:ring-success-500"
+              />
+              <span className="font-medium text-slate-700">Pago (desconsidera dos totais e dashboards)</span>
             </label>
           </div>
         </div>

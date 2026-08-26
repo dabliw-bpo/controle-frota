@@ -36,6 +36,7 @@ function buildData(formData: FormData) {
     valor: num(formData, "valor"),
     descontarMotorista: formData.get("descontarMotorista") === "on",
     codigoBarras: str(formData, "codigoBarras"),
+    pago: formData.get("pago") === "on",
   };
 }
 
@@ -47,10 +48,10 @@ export async function criarMulta(formData: FormData) {
   if (!veiculoId) throw new Error("Placa é obrigatória.");
   if (!descricao) throw new Error("Descrição é obrigatória.");
 
-  const { motoristaId, tipo, data, valor, descontarMotorista, codigoBarras } = buildData(formData);
+  const { motoristaId, tipo, data, valor, descontarMotorista, codigoBarras, pago } = buildData(formData);
 
   const multa = await prisma.multa.create({
-    data: { veiculoId, motoristaId, tipo, data, descricao, valor, descontarMotorista, codigoBarras },
+    data: { veiculoId, motoristaId, tipo, data, descricao, valor, descontarMotorista, codigoBarras, pago },
   });
 
   revalidatePath("/multas");
@@ -65,11 +66,11 @@ export async function atualizarMulta(multaId: string, formData: FormData) {
   if (!veiculoId) throw new Error("Placa é obrigatória.");
   if (!descricao) throw new Error("Descrição é obrigatória.");
 
-  const { motoristaId, tipo, data, valor, descontarMotorista, codigoBarras } = buildData(formData);
+  const { motoristaId, tipo, data, valor, descontarMotorista, codigoBarras, pago } = buildData(formData);
 
   await prisma.multa.update({
     where: { id: multaId },
-    data: { veiculoId, motoristaId, tipo, data, descricao, valor, descontarMotorista, codigoBarras },
+    data: { veiculoId, motoristaId, tipo, data, descricao, valor, descontarMotorista, codigoBarras, pago },
   });
 
   revalidatePath(`/multas/${multaId}`);
@@ -81,4 +82,10 @@ export async function excluirMulta(multaId: string) {
   await prisma.multa.delete({ where: { id: multaId } });
   revalidatePath("/multas");
   redirect("/multas");
+}
+
+export async function alternarPago(multaId: string, pago: boolean) {
+  await requireEditor();
+  await prisma.multa.update({ where: { id: multaId }, data: { pago } });
+  revalidatePath("/multas");
 }

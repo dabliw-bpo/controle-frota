@@ -317,6 +317,7 @@ model Multa {
   valor              Float?
   descontarMotorista Boolean @default(false) // se a multa será descontada do motorista
   codigoBarras       String? // linha digitável / código de barras do boleto/DAR
+  pago               Boolean @default(false) // se já foi pago (some fora dos totais quando marcado)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

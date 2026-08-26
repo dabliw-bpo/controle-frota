@@ -14,6 +14,7 @@ export type MultaExportRow = {
   codigoBarras: string;
   valor: number | null;
   descontarMotorista: boolean;
+  pago: boolean;
 };
 
 export type VencimentoExportRow = {
@@ -42,6 +43,7 @@ const HEADERS = [
   "Código de Barras",
   "Valor",
   "Desconta do motorista",
+  "Pago",
 ];
 const HEADERS_VENCIMENTO = ["Data de Vencimento", "Multa", "Licenciamento", "Total", "Qtd. Registros"];
 const HEADERS_ABC = ["#", "Placa", "Despesa", "% do total", "% Acumulado", "Classe"];
@@ -57,6 +59,7 @@ function linhasExport(rows: MultaExportRow[]): (string | number)[][] {
     r.codigoBarras,
     r.valor ?? 0,
     r.descontarMotorista ? "Sim" : "Não",
+    r.pago ? "Sim" : "Não",
   ]);
 }
 
@@ -141,9 +144,12 @@ export default function MultasExportButtons({
       doc.setFontSize(13);
       doc.setTextColor(30, 41, 59);
       doc.text("Total por Data de Vencimento", 14, 15);
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Não considera registros já marcados como pagos.", 14, 20);
 
       autoTable(doc, {
-        startY: 20,
+        startY: 24,
         head: [HEADERS_VENCIMENTO],
         body: porVencimento.map((v) => [
           v.data,
@@ -161,9 +167,12 @@ export default function MultasExportButtons({
       doc.setFontSize(13);
       doc.setTextColor(30, 41, 59);
       doc.text("Curva ABC de Placas por Despesa", 14, 15);
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Não considera registros já marcados como pagos.", 14, 20);
 
       autoTable(doc, {
-        startY: 20,
+        startY: 24,
         head: [HEADERS_ABC],
         body: linhasAbc(curvaAbc).map((row) =>
           row.map((v, i) => (i === 2 && typeof v === "number" ? formatCurrency(v) : i === 3 || i === 4 ? `${v}%` : v))
