@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import SortableTh from "@/components/SortableTh";
+import MultasExportButtons from "@/components/MultasExportButtons";
 
 const SORT_FIELDS = ["placa", "motorista", "data"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -37,23 +38,33 @@ export default async function MultasPage({
   });
 
   const totalDescontar = multas.filter((m) => m.descontarMotorista).length;
+  const subtitle = `${multas.length} multa(s) · ${totalDescontar} a descontar do motorista`;
+  const exportRows = multas.map((m) => ({
+    data: m.data || "—",
+    placa: m.veiculo.placa,
+    motorista: m.motorista?.nome ?? "—",
+    descricao: m.descricao,
+    valor: m.valor,
+    descontarMotorista: m.descontarMotorista,
+  }));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Multas de Trânsito</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {multas.length} multa(s) · {totalDescontar} a descontar do motorista
-          </p>
+          <p className="text-slate-500 text-sm mt-1">{subtitle}</p>
         </div>
-        <Link
-          href="/multas/novo"
-          className="inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          Nova multa
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <MultasExportButtons rows={exportRows} subtitle={subtitle} />
+          <Link
+            href="/multas/novo"
+            className="inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            Nova multa
+          </Link>
+        </div>
       </div>
 
       <form className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200">
