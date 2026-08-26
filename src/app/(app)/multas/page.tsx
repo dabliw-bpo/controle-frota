@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import SortableTh from "@/components/SortableTh";
 import MultasExportButtons from "@/components/MultasExportButtons";
+import MultasVencimentoChart from "@/components/MultasVencimentoChart";
+import MultasCurvaAbc from "@/components/MultasCurvaAbc";
 
 const SORT_FIELDS = ["placa", "motorista", "data"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -86,6 +88,49 @@ export default async function MultasPage({
     descontarMotorista: m.descontarMotorista,
   }));
 
+  // Dashboard: soma dos totais por data de vencimento.
+  const porVencimentoMap = new Map<string, { data: string; multa: number; licenciamento: number; qtd: number }>();
+  for (const m of multas) {
+    const chave = m.data || "Sem data";
+    const atual = porVencimentoMap.get(chave) ?? { data: chave, multa: 0, licenciamento: 0, qtd: 0 };
+    const valor = m.valor ?? 0;
+    if (m.tipo === "MULTA") atual.multa += valor;
+    else atual.licenciamento += valor;
+    atual.qtd += 1;
+    porVencimentoMap.set(chave, atual);
+  }
+  const porVencimento = Array.from(porVencimentoMap.values())
+    .map((v) => ({ ...v, total: v.multa + v.licenciamento }))
+    .sort((a, b) => {
+      const da = parseDataBr(a.data);
+      const db = parseDataBr(b.data);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+
+  // Dashboard: curva ABC de placas por despesa total (multa + licenciamento).
+  const porPlacaMap = new Map<string, number>();
+  for (const m of multas) {
+    const placa = m.veiculo.placa;
+    porPlacaMap.set(placa, (porPlacaMap.get(placa) ?? 0) + (m.valor ?? 0));
+  }
+  const totalGeralValor = Array.from(porPlacaMap.values()).reduce((acc, v) => acc + v, 0);
+  let acumulado = 0;
+  const curvaAbc = Array.from(porPlacaMap.entries())
+    .map(([placa, valor]) => ({ placa, valor }))
+    .sort((a, b) => b.valor - a.valor)
+    .map((p) => {
+      const acumuladoAntes = acumulado;
+      acumulado += p.valor;
+      const percentual = totalGeralValor > 0 ? (p.valor / totalGeralValor) * 100 : 0;
+      const percentualAcumulado = totalGeralValor > 0 ? (acumulado / totalGeralValor) * 100 : 0;
+      const percentualAntes = totalGeralValor > 0 ? (acumuladoAntes / totalGeralValor) * 100 : 0;
+      const classe: "A" | "B" | "C" = percentualAntes < 80 ? "A" : percentualAntes < 95 ? "B" : "C";
+      return { placa: p.placa, valor: p.valor, percentual, percentualAcumulado, classe };
+    });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -94,7 +139,7 @@ export default async function MultasPage({
           <p className="text-slate-500 text-sm mt-1">{subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <MultasExportButtons rows={exportRows} subtitle={subtitle} />
+          <MultasExportButtons rows={exportRows} subtitle={subtitle} porVencimento={porVencimento} curvaAbc={curvaAbc} />
           <Link
             href="/multas/novo"
             className="inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
@@ -102,6 +147,17 @@ export default async function MultasPage({
             <Plus size={16} strokeWidth={2.5} />
             Nova multa
           </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h2 className="font-semibold text-slate-900 mb-4">Total por data de vencimento</h2>
+          <MultasVencimentoChart dados={porVencimento} />
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h2 className="font-semibold text-slate-900 mb-4">Curva ABC de placas por despesa</h2>
+          <MultasCurvaAbc linhas={curvaAbc} />
         </div>
       </div>
 
