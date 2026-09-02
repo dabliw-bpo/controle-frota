@@ -4,8 +4,34 @@ import { STATUS_VEICULO_OUTRO_MENU } from "@/lib/constants";
 import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import { getStatusList } from "@/lib/settings";
 import PieChart, { PIE_PALETTE, corNomeParaHex } from "@/components/PieChart";
+import SortableTh from "@/components/SortableTh";
+import DashboardFaturamentoExport from "@/components/DashboardFaturamentoExport";
 
 const FROTA_ATIVA_WHERE = { status: { notIn: [...STATUS_VEICULO_OUTRO_MENU] as string[] } };
+
+const SORT_FIELDS = ["placa", "motorista", "frete", "abastecimento", "comissao", "diarias", "lucro", "margem"] as const;
+type SortField = (typeof SORT_FIELDS)[number];
+
+function ordenarFaturamento<
+  T extends {
+    placas: string;
+    motorista: { nome: string } | null;
+    frete: number;
+    abastecimento: number;
+    comissao: number;
+    diarias: number;
+    lucro: number;
+    margem: number;
+  }
+>(linhas: T[], sort: string | undefined, dir: "asc" | "desc"): T[] {
+  const field: SortField = SORT_FIELDS.includes(sort as SortField) ? (sort as SortField) : "lucro";
+  const mult = dir === "asc" ? 1 : -1;
+  return [...linhas].sort((a, b) => {
+    if (field === "placa") return mult * a.placas.localeCompare(b.placas);
+    if (field === "motorista") return mult * (a.motorista?.nome ?? "").localeCompare(b.motorista?.nome ?? "");
+    return mult * (a[field] - b[field]);
+  });
+}
 
 const MESES = [
   "Janeiro",
@@ -27,13 +53,14 @@ const COMISSAO_PERCENTUAL = 0.12;
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { mes?: string; ano?: string };
+  searchParams: { mes?: string; ano?: string; sort?: string; dir?: string };
 }) {
   const hoje = new Date();
   const mes = Number(searchParams.mes) || hoje.getMonth() + 1;
   const ano = Number(searchParams.ano) || hoje.getFullYear();
   const anoAtual = hoje.getFullYear();
   const anos = Array.from({ length: 5 }, (_, i) => anoAtual + 1 - i);
+  const dir: "asc" | "desc" = searchParams.dir === "asc" ? "asc" : "desc";
 
   const statusList = await getStatusList();
   const [total, porStatus, porTipo, porEmpresa, motoristasCount, veiculosLeves, veiculos, faturamentos] =
@@ -61,23 +88,23 @@ export default async function DashboardPage({
   const empresas = await prisma.empresa.findMany();
   const empresaMap = new Map(empresas.map((e) => [e.id, e.nome]));
 
-  const linhasFaturamento = faturamentos
-    .map((f) => {
-      const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
-      const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
-      const despesas = f.lancamentos.reduce((acc, l) => acc + (l.despesas ?? 0), 0);
-      const pedagio = f.lancamentos.reduce((acc, l) => acc + (l.pedagio ?? 0), 0);
-      const comissao = f.lancamentos.reduce(
-        (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
-        0
-      );
-      const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
-      const lucro = frete - abastecimento - despesas - pedagio - comissao;
-      const margem = frete > 0 ? lucro / frete : 0;
-      const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
-      return { ...f, frete, abastecimento, despesas, pedagio, comissao, diarias, lucro, margem, placas };
-    })
-    .sort((a, b) => b.lucro - a.lucro);
+  const linhasFaturamentoBrutas = faturamentos.map((f) => {
+    const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
+    const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
+    const despesas = f.lancamentos.reduce((acc, l) => acc + (l.despesas ?? 0), 0);
+    const pedagio = f.lancamentos.reduce((acc, l) => acc + (l.pedagio ?? 0), 0);
+    const comissao = f.lancamentos.reduce(
+      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
+      0
+    );
+    const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
+    const lucro = frete - abastecimento - despesas - pedagio - comissao;
+    const margem = frete > 0 ? lucro / frete : 0;
+    const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
+    return { ...f, frete, abastecimento, despesas, pedagio, comissao, diarias, lucro, margem, placas };
+  });
+
+  const linhasFaturamento = ordenarFaturamento(linhasFaturamentoBrutas, searchParams.sort, dir);
 
   const totaisFaturamento = linhasFaturamento.reduce(
     (acc, l) => ({
@@ -196,31 +223,49 @@ export default async function DashboardPage({
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h2 className="text-lg font-semibold text-slate-900">Faturamento</h2>
-          <form className="flex gap-2 items-end">
-            <label className="text-sm">
-              <span className="block font-medium text-slate-700 mb-1">Mês</span>
-              <select name="mes" defaultValue={mes} className="input">
-                {MESES.map((nome, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm">
-              <span className="block font-medium text-slate-700 mb-1">Ano</span>
-              <select name="ano" defaultValue={ano} className="input">
-                {anos.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
-              Filtrar
-            </button>
-          </form>
+          <div className="flex flex-wrap items-end gap-2">
+            <form className="flex gap-2 items-end">
+              <label className="text-sm">
+                <span className="block font-medium text-slate-700 mb-1">Mês</span>
+                <select name="mes" defaultValue={mes} className="input">
+                  {MESES.map((nome, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm">
+                <span className="block font-medium text-slate-700 mb-1">Ano</span>
+                <select name="ano" defaultValue={ano} className="input">
+                  {anos.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+                Filtrar
+              </button>
+            </form>
+            <DashboardFaturamentoExport
+              linhas={linhasFaturamento.map((l) => ({
+                placa: l.placas,
+                motorista: l.motorista?.nome ?? "—",
+                frete: l.frete,
+                abastecimento: l.abastecimento,
+                comissao: l.comissao,
+                diarias: l.diarias,
+                lucro: l.lucro,
+                margem: l.margem,
+              }))}
+              totais={totaisFaturamento}
+              margemMedia={margemMedia}
+              mesNome={MESES[mes - 1]}
+              ano={ano}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -237,14 +282,14 @@ export default async function DashboardPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
-                <th className="px-4 py-3 font-medium">Placa</th>
-                <th className="px-4 py-3 font-medium">Motorista</th>
-                <th className="px-4 py-3 font-medium">Vlr. Frete</th>
-                <th className="px-4 py-3 font-medium">Abastecimento</th>
-                <th className="px-4 py-3 font-medium">Comissão</th>
-                <th className="px-4 py-3 font-medium">Diárias</th>
-                <th className="px-4 py-3 font-medium">Lucro</th>
-                <th className="px-4 py-3 font-medium">Margem</th>
+                <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Vlr. Frete" sortKey="frete" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Abastecimento" sortKey="abastecimento" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Comissão" sortKey="comissao" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Diárias" sortKey="diarias" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Lucro" sortKey="lucro" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Margem" sortKey="margem" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               </tr>
             </thead>
             <tbody>
