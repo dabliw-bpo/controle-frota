@@ -94,54 +94,6 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard label="Valor total (frota)" value={formatCurrency(valorTotalFrota)} colSpan={2} />
-        <StatCard label="Total de veículos" value={total.toString()} />
-        <StatCard label="Ativos" value={(statusMap.get("ATIVO") ?? 0).toString()} />
-        <StatCard label="Em manutenção" value={(statusMap.get("MANUTENCAO") ?? 0).toString()} />
-        <StatCard label="Motoristas" value={motoristasCount.toString()} />
-        <StatCard label="Veículos leves (carros)" value={veiculosLeves.toString()} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">Veículos por status</h2>
-          <PieChart
-            data={statusList
-              .map((status) => ({
-                label: status.label,
-                value: statusMap.get(status.chave) ?? 0,
-                color: corNomeParaHex(status.cor),
-              }))
-              .filter((d) => d.value > 0)}
-          />
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">Veículos por tipo</h2>
-          <PieChart
-            data={tipos.map((t, i) => ({
-              label: t.carroceria ?? "—",
-              value: t._count.carroceria,
-              color: PIE_PALETTE[i % PIE_PALETTE.length],
-            }))}
-          />
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">Veículos por empresa</h2>
-          <PieChart
-            data={porEmpresa
-              .filter((e) => e.empresaId)
-              .map((e, i) => ({
-                label: empresaMap.get(e.empresaId!) ?? "—",
-                value: e._count.empresaId,
-                color: PIE_PALETTE[i % PIE_PALETTE.length],
-              }))}
-          />
-        </div>
-      </div>
-
       {/* Faturamento */}
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -171,6 +123,17 @@ export default async function DashboardPage({
               Filtrar
             </button>
           </form>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <StatCard label="Abastecimento" value={formatCurrency(totaisFaturamento.abastecimento)} />
+          <StatCard label="Base Comissão" value={formatCurrency(totaisFaturamento.baseComissao)} />
+          <StatCard label="Comissão" value={formatCurrency(totaisFaturamento.comissao)} />
+          <StatCard label="Diárias" value={formatCurrency(totaisFaturamento.diarias)} />
+          <StatCard
+            label="Comissão + Diárias"
+            value={formatCurrency(totaisFaturamento.comissao + totaisFaturamento.diarias)}
+          />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
@@ -229,6 +192,54 @@ export default async function DashboardPage({
               </tfoot>
             )}
           </table>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+        <StatCard label="Valor total (frota)" value={formatCurrency(valorTotalFrota)} colSpan={2} />
+        <StatCard label="Total de veículos" value={total.toString()} />
+        <StatCard label="Ativos" value={(statusMap.get("ATIVO") ?? 0).toString()} />
+        <StatCard label="Em manutenção" value={(statusMap.get("MANUTENCAO") ?? 0).toString()} />
+        <StatCard label="Motoristas" value={motoristasCount.toString()} />
+        <StatCard label="Veículos leves (carros)" value={veiculosLeves.toString()} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h2 className="font-semibold text-slate-900 mb-4">Veículos por status</h2>
+          <PieChart
+            data={statusList
+              .map((status) => ({
+                label: status.label,
+                value: statusMap.get(status.chave) ?? 0,
+                color: corNomeParaHex(status.cor),
+              }))
+              .filter((d) => d.value > 0)}
+          />
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h2 className="font-semibold text-slate-900 mb-4">Veículos por tipo</h2>
+          <PieChart
+            data={tipos.map((t, i) => ({
+              label: t.carroceria ?? "—",
+              value: t._count.carroceria,
+              color: PIE_PALETTE[i % PIE_PALETTE.length],
+            }))}
+          />
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h2 className="font-semibold text-slate-900 mb-4">Veículos por empresa</h2>
+          <PieChart
+            data={porEmpresa
+              .filter((e) => e.empresaId)
+              .map((e, i) => ({
+                label: empresaMap.get(e.empresaId!) ?? "—",
+                value: e._count.empresaId,
+                color: PIE_PALETTE[i % PIE_PALETTE.length],
+              }))}
+          />
         </div>
       </div>
     </div>
