@@ -43,20 +43,29 @@ export async function salvarFaturamento(input: {
 }) {
   await requireEditor();
 
-  const mensal = await prisma.faturamentoMensal.upsert({
+  // Cada motorista tem seu proprio registro mensal por veiculo — mesmo quando a
+  // placa e compartilhada por mais de um motorista. Busca manual (em vez de
+  // upsert com chave composta) porque motoristaId e opcional e o Postgres nao
+  // trata NULL como valor comparavel em constraints unique.
+  const existente = await prisma.faturamentoMensal.findFirst({
     where: {
-      veiculoId_ano_mes: { veiculoId: input.veiculoId, ano: input.ano, mes: input.mes },
-    },
-    create: {
       veiculoId: input.veiculoId,
       ano: input.ano,
       mes: input.mes,
       motoristaId: input.motoristaId,
     },
-    update: {
-      motoristaId: input.motoristaId,
-    },
   });
+
+  const mensal = existente
+    ? existente
+    : await prisma.faturamentoMensal.create({
+        data: {
+          veiculoId: input.veiculoId,
+          ano: input.ano,
+          mes: input.mes,
+          motoristaId: input.motoristaId,
+        },
+      });
 
   const linhasValidas = input.lancamentos.filter(
     (l) =>

@@ -45,21 +45,23 @@ export default async function FaturamentoVeiculoPage({
   const ano = Number(searchParams.ano) || hoje.getFullYear();
   const mes = Number(searchParams.mes) || hoje.getMonth() + 1;
 
-  const mensal = await prisma.faturamentoMensal.findUnique({
-    where: { veiculoId_ano_mes: { veiculoId: veiculo.id, ano, mes } },
+  // O motorista precisa ser resolvido antes de buscar o faturamento do mês,
+  // já que cada motorista tem seu próprio registro mesmo quando a placa é
+  // compartilhada por mais de um (senão o faturamento de um vaza para o outro).
+  const motoristaEscolhido = searchParams.motoristaId
+    ? await prisma.motorista.findUnique({ where: { id: searchParams.motoristaId } })
+    : null;
+
+  const motoristaEfetivo = motoristaEscolhido ?? veiculo.motoristasCadastrados[0] ?? null;
+
+  const mensal = await prisma.faturamentoMensal.findFirst({
+    where: { veiculoId: veiculo.id, ano, mes, motoristaId: motoristaEfetivo?.id ?? null },
     include: {
       lancamentos: { orderBy: { ordem: "asc" } },
       diarias: { orderBy: { ordem: "asc" } },
       motorista: true,
     },
   });
-
-  const motoristaEscolhido = searchParams.motoristaId
-    ? await prisma.motorista.findUnique({ where: { id: searchParams.motoristaId } })
-    : null;
-
-  const motoristaEfetivo =
-    motoristaEscolhido ?? mensal?.motorista ?? veiculo.motoristasCadastrados[0] ?? null;
 
   const anoAtual = hoje.getFullYear();
   const anos = Array.from({ length: 5 }, (_, i) => anoAtual + 1 - i);
@@ -114,7 +116,7 @@ export default async function FaturamentoVeiculoPage({
       </form>
 
       <FaturamentoEditor
-        key={`${ano}-${mes}`}
+        key={`${ano}-${mes}-${motoristaEfetivo?.id ?? "sem-motorista"}`}
         veiculoId={veiculo.id}
         ano={ano}
         mes={mes}

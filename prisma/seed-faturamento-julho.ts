@@ -137,11 +137,14 @@ async function main() {
       });
     }
 
-    const mensal = await prisma.faturamentoMensal.upsert({
-      where: { veiculoId_ano_mes: { veiculoId: veiculo.id, ano: ANO, mes: MES } },
-      create: { veiculoId: veiculo.id, ano: ANO, mes: MES, motoristaId: motorista.id },
-      update: { motoristaId: motorista.id },
+    const existente = await prisma.faturamentoMensal.findFirst({
+      where: { veiculoId: veiculo.id, ano: ANO, mes: MES, motoristaId: motorista.id },
     });
+    const mensal =
+      existente ??
+      (await prisma.faturamentoMensal.create({
+        data: { veiculoId: veiculo.id, ano: ANO, mes: MES, motoristaId: motorista.id },
+      }));
 
     await prisma.faturamentoLancamento.deleteMany({ where: { faturamentoMensalId: mensal.id } });
     if (lancamentos.length) {
