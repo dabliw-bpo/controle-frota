@@ -4,8 +4,32 @@ import { STATUS_VEICULO_OUTRO_MENU } from "@/lib/constants";
 import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import { getStatusList } from "@/lib/settings";
 import PieChart, { PIE_PALETTE, corNomeParaHex } from "@/components/PieChart";
+import SortableTh from "@/components/SortableTh";
 
 const FROTA_ATIVA_WHERE = { status: { notIn: [...STATUS_VEICULO_OUTRO_MENU] as string[] } };
+
+const SORT_FIELDS = ["placa", "motorista", "abastecimento", "baseComissao", "comissao", "diarias", "total"] as const;
+type SortField = (typeof SORT_FIELDS)[number];
+
+function ordenarFaturamento<
+  T extends {
+    placas: string;
+    motorista: { nome: string } | null;
+    abastecimento: number;
+    baseComissao: number;
+    comissao: number;
+    diarias: number;
+  }
+>(linhas: T[], sort: string | undefined, dir: "asc" | "desc"): T[] {
+  const field: SortField = SORT_FIELDS.includes(sort as SortField) ? (sort as SortField) : "total";
+  const mult = dir === "asc" ? 1 : -1;
+  return [...linhas].sort((a, b) => {
+    if (field === "placa") return mult * a.placas.localeCompare(b.placas);
+    if (field === "motorista") return mult * (a.motorista?.nome ?? "").localeCompare(b.motorista?.nome ?? "");
+    if (field === "total") return mult * (a.comissao + a.diarias - (b.comissao + b.diarias));
+    return mult * (a[field] - b[field]);
+  });
+}
 
 const MESES = [
   "Janeiro",
@@ -27,13 +51,14 @@ const COMISSAO_PERCENTUAL = 0.12;
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { mes?: string; ano?: string };
+  searchParams: { mes?: string; ano?: string; sort?: string; dir?: string };
 }) {
   const hoje = new Date();
   const mes = Number(searchParams.mes) || hoje.getMonth() + 1;
   const ano = Number(searchParams.ano) || hoje.getFullYear();
   const anoAtual = hoje.getFullYear();
   const anos = Array.from({ length: 5 }, (_, i) => anoAtual + 1 - i);
+  const dir: "asc" | "desc" = searchParams.dir === "asc" ? "asc" : "desc";
 
   const statusList = await getStatusList();
   const [total, porStatus, porTipo, porEmpresa, motoristasCount, veiculosLeves, veiculos, faturamentos] =
@@ -61,19 +86,19 @@ export default async function DashboardPage({
   const empresas = await prisma.empresa.findMany();
   const empresaMap = new Map(empresas.map((e) => [e.id, e.nome]));
 
-  const linhasFaturamento = faturamentos
-    .map((f) => {
-      const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
-      const baseComissao = f.lancamentos.reduce(
-        (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)),
-        0
-      );
-      const comissao = baseComissao * COMISSAO_PERCENTUAL;
-      const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
-      const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
-      return { ...f, abastecimento, baseComissao, comissao, diarias, placas };
-    })
-    .sort((a, b) => b.comissao + b.diarias - (a.comissao + a.diarias));
+  const linhasFaturamentoBrutas = faturamentos.map((f) => {
+    const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
+    const baseComissao = f.lancamentos.reduce(
+      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)),
+      0
+    );
+    const comissao = baseComissao * COMISSAO_PERCENTUAL;
+    const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
+    const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
+    return { ...f, abastecimento, baseComissao, comissao, diarias, placas };
+  });
+
+  const linhasFaturamento = ordenarFaturamento(linhasFaturamentoBrutas, searchParams.sort, dir);
 
   const totaisFaturamento = linhasFaturamento.reduce(
     (acc, l) => ({
@@ -140,13 +165,13 @@ export default async function DashboardPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
-                <th className="px-4 py-3 font-medium">Placa</th>
-                <th className="px-4 py-3 font-medium">Motorista</th>
-                <th className="px-4 py-3 font-medium">Abastecimento</th>
-                <th className="px-4 py-3 font-medium">Base Comissão</th>
-                <th className="px-4 py-3 font-medium">Comissão</th>
-                <th className="px-4 py-3 font-medium">Diárias</th>
-                <th className="px-4 py-3 font-medium">Comissão + Diárias</th>
+                <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Abastecimento" sortKey="abastecimento" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Base Comissão" sortKey="baseComissao" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Comissão" sortKey="comissao" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Diárias" sortKey="diarias" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
+                <SortableTh label="Comissão + Diárias" sortKey="total" currentSort={searchParams.sort} currentDir={dir} searchParams={searchParams} />
               </tr>
             </thead>
             <tbody>
