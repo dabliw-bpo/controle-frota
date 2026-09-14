@@ -24,6 +24,10 @@ export type LancamentoInput = {
   pedagio: number | null;
   seguro: number | null;
   adm: number | null;
+  ad: number | null;
+  dataRecebAd: string | null;
+  sd: number | null;
+  dataRecebSd: string | null;
 };
 
 export type DiariaInput = {
@@ -77,7 +81,9 @@ export async function salvarFaturamento(input: {
       l.abastecimento ||
       l.pedagio ||
       l.seguro ||
-      l.adm
+      l.adm ||
+      l.ad ||
+      l.sd
   );
 
   const diariasValidas = input.diarias.filter(
@@ -103,6 +109,10 @@ export async function salvarFaturamento(input: {
               pedagio: l.pedagio,
               seguro: l.seguro,
               adm: l.adm,
+              ad: l.ad,
+              dataRecebAd: l.dataRecebAd,
+              sd: l.sd,
+              dataRecebSd: l.dataRecebSd,
             })),
           }),
         ]

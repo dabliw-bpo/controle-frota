@@ -110,6 +110,50 @@ export default async function DashboardPage({
     { abastecimento: 0, baseComissao: 0, comissao: 0, diarias: 0 }
   );
 
+  // AD/SD são agregados por motorista (não por veículo) — um motorista pode
+  // ter registros em mais de um veículo no mesmo mês, então soma-se tudo num
+  // mapa por motoristaId em vez de usar um registro FaturamentoMensal por linha.
+  const linhasAdSdMap = new Map<
+    string,
+    { motoristaNome: string; ad: number; datasAd: Set<string>; sd: number; datasSd: Set<string> }
+  >();
+  for (const f of faturamentos) {
+    if (!f.motoristaId || !f.motorista) continue;
+    const ad = f.lancamentos.reduce((acc, l) => acc + (l.ad ?? 0), 0);
+    const sd = f.lancamentos.reduce((acc, l) => acc + (l.sd ?? 0), 0);
+    if (!ad && !sd) continue;
+    const atual = linhasAdSdMap.get(f.motoristaId) ?? {
+      motoristaNome: f.motorista.nome,
+      ad: 0,
+      datasAd: new Set<string>(),
+      sd: 0,
+      datasSd: new Set<string>(),
+    };
+    atual.ad += ad;
+    atual.sd += sd;
+    for (const l of f.lancamentos) {
+      if (l.dataRecebAd && l.dataRecebAd.trim()) atual.datasAd.add(l.dataRecebAd.trim());
+      if (l.dataRecebSd && l.dataRecebSd.trim()) atual.datasSd.add(l.dataRecebSd.trim());
+    }
+    linhasAdSdMap.set(f.motoristaId, atual);
+  }
+
+  const linhasAdSd = Array.from(linhasAdSdMap.entries())
+    .map(([motoristaId, v]) => ({
+      motoristaId,
+      motoristaNome: v.motoristaNome,
+      ad: v.ad,
+      dataRecebAd: v.datasAd.size ? Array.from(v.datasAd).sort().join(", ") : "—",
+      sd: v.sd,
+      dataRecebSd: v.datasSd.size ? Array.from(v.datasSd).sort().join(", ") : "—",
+    }))
+    .sort((a, b) => a.motoristaNome.localeCompare(b.motoristaNome));
+
+  const totaisAdSd = linhasAdSd.reduce(
+    (acc, l) => ({ ad: acc.ad + l.ad, sd: acc.sd + l.sd }),
+    { ad: 0, sd: 0 }
+  );
+
   return (
     <div className="space-y-8">
       <div>
@@ -213,6 +257,63 @@ export default async function DashboardPage({
                   <td className="px-4 py-3 text-emerald-700">
                     {formatCurrency(totaisFaturamento.comissao + totaisFaturamento.diarias)}
                   </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
+
+      {/* Adiantamentos e Saldos (AD/SD) */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">Adiantamentos e Saldos (AD/SD)</h2>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <StatCard label="Total AD" value={formatCurrency(totaisAdSd.ad)} />
+          <StatCard label="Total SD" value={formatCurrency(totaisAdSd.sd)} />
+          <StatCard label="Total AD + SD" value={formatCurrency(totaisAdSd.ad + totaisAdSd.sd)} />
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
+                <th className="px-4 py-3 font-medium">Motorista</th>
+                <th className="px-4 py-3 font-medium">AD</th>
+                <th className="px-4 py-3 font-medium">Data Receb. AD</th>
+                <th className="px-4 py-3 font-medium">SD</th>
+                <th className="px-4 py-3 font-medium">Data Receb. SD</th>
+                <th className="px-4 py-3 font-medium">Total AD + SD</th>
+              </tr>
+            </thead>
+            <tbody>
+              {linhasAdSd.map((l) => (
+                <tr key={l.motoristaId} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                  <td className="px-4 py-3 font-medium text-slate-800">{l.motoristaNome}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.ad)}</td>
+                  <td className="px-4 py-3 text-slate-600">{l.dataRecebAd}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.sd)}</td>
+                  <td className="px-4 py-3 text-slate-600">{l.dataRecebSd}</td>
+                  <td className="px-4 py-3 font-medium text-emerald-700">{formatCurrency(l.ad + l.sd)}</td>
+                </tr>
+              ))}
+              {linhasAdSd.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                    Nenhum adiantamento ou saldo lançado neste período.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {linhasAdSd.length > 0 && (
+              <tfoot>
+                <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
+                  <td className="px-4 py-3">Total ({linhasAdSd.length})</td>
+                  <td className="px-4 py-3">{formatCurrency(totaisAdSd.ad)}</td>
+                  <td className="px-4 py-3"></td>
+                  <td className="px-4 py-3">{formatCurrency(totaisAdSd.sd)}</td>
+                  <td className="px-4 py-3"></td>
+                  <td className="px-4 py-3 text-emerald-700">{formatCurrency(totaisAdSd.ad + totaisAdSd.sd)}</td>
                 </tr>
               </tfoot>
             )}

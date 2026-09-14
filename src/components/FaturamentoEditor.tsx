@@ -18,6 +18,10 @@ type LinhaEditavel = {
   pedagio: string;
   seguro: string;
   adm: string;
+  ad: string;
+  dataRecebAd: string;
+  sd: string;
+  dataRecebSd: string;
 };
 
 type DiariaEditavel = {
@@ -42,6 +46,10 @@ function linhaVazia(placaPadrao: string): LinhaEditavel {
     pedagio: "",
     seguro: "",
     adm: "",
+    ad: "",
+    dataRecebAd: "",
+    sd: "",
+    dataRecebSd: "",
   };
 }
 
@@ -86,6 +94,10 @@ export default function FaturamentoEditor({
     pedagio: number | null;
     seguro: number | null;
     adm: number | null;
+    ad?: number | null;
+    dataRecebAd?: string | null;
+    sd?: number | null;
+    dataRecebSd?: string | null;
   }[];
   diariasIniciais: {
     data: string | null;
@@ -109,6 +121,10 @@ export default function FaturamentoEditor({
       pedagio: l.pedagio != null ? String(l.pedagio) : "",
       seguro: l.seguro != null ? String(l.seguro) : "",
       adm: l.adm != null ? String(l.adm) : "",
+      ad: l.ad != null ? String(l.ad) : "",
+      dataRecebAd: l.dataRecebAd ?? "",
+      sd: l.sd != null ? String(l.sd) : "",
+      dataRecebSd: l.dataRecebSd ?? "",
     }));
     return iniciais.length ? iniciais : [linhaVazia(placa)];
   });
@@ -180,7 +196,18 @@ export default function FaturamentoEditor({
         const adm = num(l.adm);
         const base = vlrFrete - seguro - adm;
         const comissao = base * COMISSAO_PERCENTUAL;
-        return { vlrFrete, despesas: num(l.despesas), abastecimento: num(l.abastecimento), pedagio: num(l.pedagio), seguro, adm, base, comissao };
+        return {
+          vlrFrete,
+          despesas: num(l.despesas),
+          abastecimento: num(l.abastecimento),
+          pedagio: num(l.pedagio),
+          seguro,
+          adm,
+          base,
+          comissao,
+          ad: num(l.ad),
+          sd: num(l.sd),
+        };
       }),
     [linhas]
   );
@@ -197,8 +224,10 @@ export default function FaturamentoEditor({
           adm: acc.adm + c.adm,
           base: acc.base + c.base,
           comissao: acc.comissao + c.comissao,
+          ad: acc.ad + c.ad,
+          sd: acc.sd + c.sd,
         }),
-        { vlrFrete: 0, despesas: 0, abastecimento: 0, pedagio: 0, seguro: 0, adm: 0, base: 0, comissao: 0 }
+        { vlrFrete: 0, despesas: 0, abastecimento: 0, pedagio: 0, seguro: 0, adm: 0, base: 0, comissao: 0, ad: 0, sd: 0 }
       ),
     [calculadas]
   );
@@ -221,6 +250,10 @@ export default function FaturamentoEditor({
     "ADM",
     "Base comissão",
     "Comissão 12%",
+    "AD",
+    "Data Receb. AD",
+    "SD",
+    "Data Receb. SD",
   ];
 
   function linhasExport(): (string | number)[][] {
@@ -238,6 +271,10 @@ export default function FaturamentoEditor({
       calculadas[idx].adm,
       calculadas[idx].base,
       calculadas[idx].comissao,
+      calculadas[idx].ad,
+      l.dataRecebAd,
+      calculadas[idx].sd,
+      l.dataRecebSd,
     ]);
   }
 
@@ -271,6 +308,10 @@ export default function FaturamentoEditor({
         totais.adm,
         totais.base,
         totais.comissao,
+        totais.ad,
+        "",
+        totais.sd,
+        "",
       ]];
       const ws = XLSX.utils.aoa_to_sheet(rows);
       const wb = XLSX.utils.book_new();
@@ -324,6 +365,10 @@ export default function FaturamentoEditor({
             formatCurrency(totais.adm),
             formatCurrency(totais.base),
             formatCurrency(totais.comissao),
+            formatCurrency(totais.ad),
+            "",
+            formatCurrency(totais.sd),
+            "",
           ],
         ],
         styles: { fontSize: 8, cellPadding: 2 },
@@ -397,6 +442,10 @@ export default function FaturamentoEditor({
       pedagio: l.pedagio.trim() ? num(l.pedagio) : null,
       seguro: l.seguro.trim() ? num(l.seguro) : null,
       adm: l.adm.trim() ? num(l.adm) : null,
+      ad: l.ad.trim() ? num(l.ad) : null,
+      dataRecebAd: l.dataRecebAd.trim() || null,
+      sd: l.sd.trim() ? num(l.sd) : null,
+      dataRecebSd: l.dataRecebSd.trim() || null,
     }));
 
     const diariasInput: DiariaInput[] = diarias.map((d) => ({
@@ -444,6 +493,10 @@ export default function FaturamentoEditor({
               <th className="px-3 py-2 font-medium min-w-[90px]">ADM</th>
               <th className="px-3 py-2 font-medium min-w-[130px] text-slate-700">Base comissão</th>
               <th className="px-3 py-2 font-medium min-w-[110px] text-slate-700">Comissão 12%</th>
+              <th className="px-3 py-2 font-medium min-w-[100px]">AD</th>
+              <th className="px-3 py-2 font-medium min-w-[130px]">Data receb. AD</th>
+              <th className="px-3 py-2 font-medium min-w-[100px]">SD</th>
+              <th className="px-3 py-2 font-medium min-w-[130px]">Data receb. SD</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -507,6 +560,10 @@ export default function FaturamentoEditor({
                 <td className="px-3 py-1 text-slate-700 font-medium whitespace-nowrap">
                   {formatCurrency(calculadas[idx].comissao)}
                 </td>
+                <Cell value={l.ad} onChange={(v) => atualizarCelula(idx, "ad", v)} numeric />
+                <Cell value={l.dataRecebAd} onChange={(v) => atualizarCelula(idx, "dataRecebAd", v)} placeholder="dd/mm/aaaa" />
+                <Cell value={l.sd} onChange={(v) => atualizarCelula(idx, "sd", v)} numeric />
+                <Cell value={l.dataRecebSd} onChange={(v) => atualizarCelula(idx, "dataRecebSd", v)} placeholder="dd/mm/aaaa" />
                 <td className="px-2 py-1 text-right">
                   <button
                     type="button"
@@ -534,6 +591,10 @@ export default function FaturamentoEditor({
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.adm)}</td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.base)}</td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.comissao)}</td>
+              <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.ad)}</td>
+              <td></td>
+              <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.sd)}</td>
+              <td></td>
               <td></td>
             </tr>
           </tfoot>

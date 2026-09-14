@@ -225,6 +225,10 @@ model FaturamentoLancamento {
   pedagio       Float?
   seguro        Float?
   adm           Float?
+  ad            Float? // adiantamento pago ao motorista
+  dataRecebAd   String? // data de recebimento do adiantamento, dd/mm/aaaa
+  sd            Float? // saldo pago ao motorista
+  dataRecebSd   String? // data de recebimento do saldo, dd/mm/aaaa
 
   createdAt     DateTime @default(now())
 }
