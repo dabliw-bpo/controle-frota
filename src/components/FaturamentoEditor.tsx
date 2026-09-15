@@ -282,6 +282,13 @@ export default function FaturamentoEditor({
     return diarias.map((d) => [d.data, d.placa, d.descricao, num(d.valor)]);
   }
 
+  // Índices de AD, Data Receb. AD, SD e Data Receb. SD em headersExport/linhasExport —
+  // ficam de fora do PDF, já que é o documento pensado pra impressão/envio ao cliente.
+  const INDICES_AD_SD = [13, 14, 15, 16];
+  function semColunasAdSd<T>(linha: T[]): T[] {
+    return linha.filter((_, i) => !INDICES_AD_SD.includes(i));
+  }
+
   function tituloExport() {
     return `Faturamento — ${placa}${motoristaNome ? ` — ${motoristaNome}` : ""} — ${mesNome}/${ano}`;
   }
@@ -346,12 +353,12 @@ export default function FaturamentoEditor({
 
       autoTable(doc, {
         startY: 20,
-        head: [headersExport],
+        head: [semColunasAdSd(headersExport)],
         body: linhasExport().map((row) =>
-          row.map((v) => (typeof v === "number" ? formatCurrency(v) : v))
+          semColunasAdSd(row).map((v) => (typeof v === "number" ? formatCurrency(v) : v))
         ),
         foot: [
-          [
+          semColunasAdSd([
             `Total (${linhas.length} lançamento${linhas.length === 1 ? "" : "s"})`,
             "",
             "",
@@ -369,7 +376,7 @@ export default function FaturamentoEditor({
             "",
             formatCurrency(totais.sd),
             "",
-          ],
+          ]),
         ],
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [15, 23, 42], textColor: 255 },
