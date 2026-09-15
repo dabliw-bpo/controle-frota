@@ -5,8 +5,19 @@ import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import { getStatusList } from "@/lib/settings";
 import PieChart, { PIE_PALETTE, corNomeParaHex } from "@/components/PieChart";
 import SortableTh from "@/components/SortableTh";
+import AdSdTable, { type CteLinha } from "@/components/AdSdTable";
 
 const FROTA_ATIVA_WHERE = { status: { notIn: [...STATUS_VEICULO_OUTRO_MENU] as string[] } };
+
+// dd/mm/aaaa -> aaaa-mm-dd, para permitir ordenação cronológica por
+// comparação de string; datas ausentes ou em formato inesperado vão pro fim.
+function chaveDataBr(data: string | null): string {
+  if (!data) return "9999-99-99";
+  const m = data.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return "9999-99-98";
+  const [, d, mo, y] = m;
+  return `${y}-${mo}-${d}`;
+}
 
 const SORT_FIELDS = ["placa", "motorista", "abastecimento", "baseComissao", "comissao", "diarias", "total"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -85,7 +96,7 @@ export default async function DashboardPage({
       }),
       prisma.faturamentoMensal.findMany({
         where: { ano: anoAdSd, mes: mesAdSd },
-        include: { lancamentos: { include: { cliente: true } } },
+        include: { veiculo: true, motorista: true, lancamentos: { include: { cliente: true } } },
       }),
     ]);
 
@@ -126,9 +137,20 @@ export default async function DashboardPage({
   // AD/SD são agregados por cliente (não por motorista), como no lançamento de
   // faturamento — cada lançamento carrega seu próprio cliente. Lançamentos sem
   // cliente definido ficam de fora da tabela e alimentam o alerta abaixo dela.
+  // Cada cliente guarda também a lista de CT-es individuais, para o painel
+  // expandir e mostrar o que falta cobrar (AD/SD lançado mas sem data de
+  // recebimento) sem sair do Painel.
   const linhasAdSdMap = new Map<
     string,
-    { clienteNome: string; baseComissao: number; ad: number; datasAd: Set<string>; sd: number; datasSd: Set<string> }
+    {
+      clienteNome: string;
+      baseComissao: number;
+      ad: number;
+      datasAd: Set<string>;
+      sd: number;
+      datasSd: Set<string>;
+      ctes: CteLinha[];
+    }
   >();
   let semClienteCount = 0;
   let semClienteValor = 0;
@@ -137,7 +159,8 @@ export default async function DashboardPage({
     for (const l of f.lancamentos) {
       const ad = l.ad ?? 0;
       const sd = l.sd ?? 0;
-      const baseComissao = (l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0);
+      const vlrFrete = l.vlrFrete ?? 0;
+      const baseComissao = vlrFrete - (l.seguro ?? 0) - (l.adm ?? 0);
       if (!ad && !sd && !baseComissao) continue;
 
       if (!l.clienteId || !l.cliente) {
@@ -153,12 +176,29 @@ export default async function DashboardPage({
         datasAd: new Set<string>(),
         sd: 0,
         datasSd: new Set<string>(),
+        ctes: [] as CteLinha[],
       };
       atual.baseComissao += baseComissao;
       atual.ad += ad;
       atual.sd += sd;
       if (l.dataRecebAd && l.dataRecebAd.trim()) atual.datasAd.add(l.dataRecebAd.trim());
       if (l.dataRecebSd && l.dataRecebSd.trim()) atual.datasSd.add(l.dataRecebSd.trim());
+      atual.ctes.push({
+        id: l.id,
+        data: l.data,
+        cte: l.cte,
+        placa: l.placa || f.veiculo.placa,
+        motoristaNome: f.motorista?.nome ?? null,
+        veiculoId: f.veiculoId,
+        ano: f.ano,
+        mes: f.mes,
+        vlrFrete,
+        baseComissao,
+        ad,
+        dataRecebAd: l.dataRecebAd,
+        sd,
+        dataRecebSd: l.dataRecebSd,
+      });
       linhasAdSdMap.set(l.clienteId, atual);
     }
   }
@@ -172,6 +212,7 @@ export default async function DashboardPage({
       dataRecebAd: v.datasAd.size ? Array.from(v.datasAd).sort().join(", ") : "—",
       sd: v.sd,
       dataRecebSd: v.datasSd.size ? Array.from(v.datasSd).sort().join(", ") : "—",
+      ctes: v.ctes.sort((a, b) => chaveDataBr(a.data).localeCompare(chaveDataBr(b.data))),
     }))
     .sort((a, b) => a.clienteNome.localeCompare(b.clienteNome));
 
@@ -347,54 +388,7 @@ export default async function DashboardPage({
           <StatCard label="Total AD + SD" value={formatCurrency(totaisAdSd.ad + totaisAdSd.sd)} />
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Base Comissão</th>
-                <th className="px-4 py-3 font-medium">AD</th>
-                <th className="px-4 py-3 font-medium">Data Receb. AD</th>
-                <th className="px-4 py-3 font-medium">SD</th>
-                <th className="px-4 py-3 font-medium">Data Receb. SD</th>
-                <th className="px-4 py-3 font-medium">Total AD + SD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhasAdSd.map((l) => (
-                <tr key={l.clienteId} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">{l.clienteNome}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.baseComissao)}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.ad)}</td>
-                  <td className="px-4 py-3 text-slate-600">{l.dataRecebAd}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatCurrency(l.sd)}</td>
-                  <td className="px-4 py-3 text-slate-600">{l.dataRecebSd}</td>
-                  <td className="px-4 py-3 font-medium text-emerald-700">{formatCurrency(l.ad + l.sd)}</td>
-                </tr>
-              ))}
-              {linhasAdSd.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                    Nenhum adiantamento ou saldo lançado neste período.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-            {linhasAdSd.length > 0 && (
-              <tfoot>
-                <tr className="bg-slate-50 font-semibold text-slate-800 border-t border-slate-200">
-                  <td className="px-4 py-3">Total ({linhasAdSd.length})</td>
-                  <td className="px-4 py-3">{formatCurrency(totaisAdSd.baseComissao)}</td>
-                  <td className="px-4 py-3">{formatCurrency(totaisAdSd.ad)}</td>
-                  <td className="px-4 py-3"></td>
-                  <td className="px-4 py-3">{formatCurrency(totaisAdSd.sd)}</td>
-                  <td className="px-4 py-3"></td>
-                  <td className="px-4 py-3 text-emerald-700">{formatCurrency(totaisAdSd.ad + totaisAdSd.sd)}</td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
+        <AdSdTable linhas={linhasAdSd} totais={totaisAdSd} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
