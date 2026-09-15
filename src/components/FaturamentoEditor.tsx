@@ -493,10 +493,10 @@ export default function FaturamentoEditor({
               <th className="px-3 py-2 font-medium min-w-[90px]">ADM</th>
               <th className="px-3 py-2 font-medium min-w-[130px] text-slate-700">Base comissão</th>
               <th className="px-3 py-2 font-medium min-w-[110px] text-slate-700">Comissão 12%</th>
-              <th className="px-3 py-2 font-medium min-w-[100px]">AD</th>
-              <th className="px-3 py-2 font-medium min-w-[130px]">Data receb. AD</th>
-              <th className="px-3 py-2 font-medium min-w-[100px]">SD</th>
-              <th className="px-3 py-2 font-medium min-w-[130px]">Data receb. SD</th>
+              <th className="px-3 py-2 font-medium min-w-[100px] print:hidden">AD</th>
+              <th className="px-3 py-2 font-medium min-w-[130px] print:hidden">Data receb. AD</th>
+              <th className="px-3 py-2 font-medium min-w-[100px] print:hidden">SD</th>
+              <th className="px-3 py-2 font-medium min-w-[130px] print:hidden">Data receb. SD</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -560,10 +560,10 @@ export default function FaturamentoEditor({
                 <td className="px-3 py-1 text-slate-700 font-medium whitespace-nowrap">
                   {formatCurrency(calculadas[idx].comissao)}
                 </td>
-                <Cell value={l.ad} onChange={(v) => atualizarCelula(idx, "ad", v)} numeric />
-                <Cell value={l.dataRecebAd} onChange={(v) => atualizarCelula(idx, "dataRecebAd", v)} placeholder="dd/mm/aaaa" />
-                <Cell value={l.sd} onChange={(v) => atualizarCelula(idx, "sd", v)} numeric />
-                <Cell value={l.dataRecebSd} onChange={(v) => atualizarCelula(idx, "dataRecebSd", v)} placeholder="dd/mm/aaaa" />
+                <Cell value={l.ad} onChange={(v) => atualizarCelula(idx, "ad", v)} numeric className="print:hidden" />
+                <Cell value={l.dataRecebAd} onChange={(v) => atualizarCelula(idx, "dataRecebAd", v)} placeholder="dd/mm/aaaa" className="print:hidden" />
+                <Cell value={l.sd} onChange={(v) => atualizarCelula(idx, "sd", v)} numeric className="print:hidden" />
+                <Cell value={l.dataRecebSd} onChange={(v) => atualizarCelula(idx, "dataRecebSd", v)} placeholder="dd/mm/aaaa" className="print:hidden" />
                 <td className="px-2 py-1 text-right">
                   <button
                     type="button"
@@ -591,10 +591,10 @@ export default function FaturamentoEditor({
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.adm)}</td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.base)}</td>
               <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.comissao)}</td>
-              <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.ad)}</td>
-              <td></td>
-              <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(totais.sd)}</td>
-              <td></td>
+              <td className="px-3 py-2 whitespace-nowrap print:hidden">{formatCurrency(totais.ad)}</td>
+              <td className="print:hidden"></td>
+              <td className="px-3 py-2 whitespace-nowrap print:hidden">{formatCurrency(totais.sd)}</td>
+              <td className="print:hidden"></td>
               <td></td>
             </tr>
           </tfoot>
@@ -773,14 +773,16 @@ function Cell({
   onChange,
   placeholder,
   numeric,
+  className,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   numeric?: boolean;
+  className?: string;
 }) {
   return (
-    <td className="px-1 py-1">
+    <td className={`px-1 py-1 ${className ?? ""}`}>
       <input
         type={numeric ? "number" : "text"}
         step={numeric ? "0.01" : undefined}
