@@ -59,7 +59,7 @@ export default function AdSdTable({
         <tbody>
           {linhas.map((l) => {
             const aberto = clienteAberto === l.clienteId;
-            const pendentes = l.ctes.filter((c) => (c.ad > 0 && !c.dataRecebAd) || (c.sd > 0 && !c.dataRecebSd)).length;
+            const pendentes = l.ctes.filter((c) => !c.dataRecebAd || !c.dataRecebSd).length;
             return (
               <Fragment key={l.clienteId}>
                 <tr
@@ -114,8 +114,8 @@ export default function AdSdTable({
                         </thead>
                         <tbody>
                           {l.ctes.map((c) => {
-                            const adPendente = c.ad > 0 && !c.dataRecebAd;
-                            const sdPendente = c.sd > 0 && !c.dataRecebSd;
+                            const adPendente = !c.dataRecebAd;
+                            const sdPendente = !c.dataRecebSd;
                             const pendente = adPendente || sdPendente;
                             return (
                               <tr key={c.id} className="border-b border-slate-100 last:border-0">
@@ -127,11 +127,11 @@ export default function AdSdTable({
                                 <td className="px-2 py-2 whitespace-nowrap">{formatCurrency(c.baseComissao)}</td>
                                 <td className="px-2 py-2 whitespace-nowrap">{formatCurrency(c.ad)}</td>
                                 <td className={`px-2 py-2 whitespace-nowrap ${adPendente ? "text-amber-700 font-medium" : ""}`}>
-                                  {c.dataRecebAd ?? (c.ad > 0 ? "pendente" : "—")}
+                                  {c.dataRecebAd ?? "pendente"}
                                 </td>
                                 <td className="px-2 py-2 whitespace-nowrap">{formatCurrency(c.sd)}</td>
                                 <td className={`px-2 py-2 whitespace-nowrap ${sdPendente ? "text-amber-700 font-medium" : ""}`}>
-                                  {c.dataRecebSd ?? (c.sd > 0 ? "pendente" : "—")}
+                                  {c.dataRecebSd ?? "pendente"}
                                 </td>
                                 <td className="px-2 py-2 whitespace-nowrap">
                                   {pendente ? (
