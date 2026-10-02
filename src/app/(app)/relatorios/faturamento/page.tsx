@@ -29,6 +29,7 @@ const SORT_FIELDS = [
   "abastecimento",
   "pedagio",
   "comissao",
+  "diarias",
   "lucro",
 ] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -41,6 +42,7 @@ type ComCampoOrdenavel = {
   abastecimento: number;
   pedagio: number;
   comissao: number;
+  diarias: number;
   lucro: number;
 };
 
@@ -83,7 +85,7 @@ export default async function RelatorioFaturamentoPage({
           }
         : {}),
     },
-    include: { veiculo: true, motorista: true, lancamentos: true },
+    include: { veiculo: true, motorista: true, lancamentos: true, diarias: true },
   });
 
   const linhasBrutas = faturamentos.map((f) => {
@@ -95,9 +97,10 @@ export default async function RelatorioFaturamentoPage({
       (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
       0
     );
+    const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
     const lucro = frete - abastecimento - despesas - pedagio - comissao;
     const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
-    return { ...f, frete, abastecimento, despesas, pedagio, comissao, lucro, placas };
+    return { ...f, frete, abastecimento, despesas, pedagio, comissao, diarias, lucro, placas };
   });
 
   const linhas = ordenar(linhasBrutas, searchParams.sort, dirAtual);
@@ -109,9 +112,10 @@ export default async function RelatorioFaturamentoPage({
       despesas: acc.despesas + l.despesas,
       pedagio: acc.pedagio + l.pedagio,
       comissao: acc.comissao + l.comissao,
+      diarias: acc.diarias + l.diarias,
       lucro: acc.lucro + l.lucro,
     }),
-    { frete: 0, abastecimento: 0, despesas: 0, pedagio: 0, comissao: 0, lucro: 0 }
+    { frete: 0, abastecimento: 0, despesas: 0, pedagio: 0, comissao: 0, diarias: 0, lucro: 0 }
   );
 
   const pdfRows = linhas.map((l) => [
@@ -122,6 +126,7 @@ export default async function RelatorioFaturamentoPage({
     formatCurrency(l.abastecimento),
     formatCurrency(l.pedagio),
     formatCurrency(l.comissao),
+    formatCurrency(l.diarias),
     formatCurrency(l.lucro),
   ]);
 
@@ -147,7 +152,7 @@ export default async function RelatorioFaturamentoPage({
             title: "Relatório de Faturamento",
             subtitle: `${MESES[mes - 1]}/${ano} · ${linhas.length} placa(s)`,
             filename: `faturamento-${mes}-${ano}.pdf`,
-            headers: ["Placa", "Motorista", "Vlr. Frete", "Despesas", "Abastecimento", "Pedágio", "Comissão", "Lucro"],
+            headers: ["Placa", "Motorista", "Vlr. Frete", "Despesas", "Abastecimento", "Pedágio", "Comissão", "Diárias", "Lucro"],
             rows: pdfRows,
             foot: [
               [
@@ -158,6 +163,7 @@ export default async function RelatorioFaturamentoPage({
                 formatCurrency(totais.abastecimento),
                 formatCurrency(totais.pedagio),
                 formatCurrency(totais.comissao),
+                formatCurrency(totais.diarias),
                 formatCurrency(totais.lucro),
               ],
             ],
@@ -222,6 +228,7 @@ export default async function RelatorioFaturamentoPage({
               <SortableTh label="Abastecimento" sortKey="abastecimento" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Pedágio" sortKey="pedagio" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Comissão" sortKey="comissao" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Diárias" sortKey="diarias" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Lucro" sortKey="lucro" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
             </tr>
           </thead>
@@ -235,6 +242,7 @@ export default async function RelatorioFaturamentoPage({
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.abastecimento)}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.pedagio)}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.comissao)}</td>
+                <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.diarias)}</td>
                 <td
                   className={`px-4 py-2 font-medium text-right whitespace-nowrap ${
                     l.lucro >= 0 ? "text-emerald-700" : "text-red-600"
@@ -246,7 +254,7 @@ export default async function RelatorioFaturamentoPage({
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                   Nenhum faturamento lançado neste período.
                 </td>
               </tr>
@@ -263,6 +271,7 @@ export default async function RelatorioFaturamentoPage({
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.abastecimento)}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.pedagio)}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.comissao)}</td>
+                <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.diarias)}</td>
                 <td
                   className={`px-4 py-3 text-right whitespace-nowrap ${
                     totais.lucro >= 0 ? "text-emerald-700" : "text-red-600"
