@@ -98,7 +98,7 @@ export default async function RelatorioFaturamentoPage({
       0
     );
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
-    const lucro = frete - abastecimento - despesas - pedagio - comissao;
+    const lucro = frete - abastecimento - despesas - pedagio - comissao - diarias;
     const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
     return { ...f, frete, abastecimento, despesas, pedagio, comissao, diarias, lucro, placas };
   });

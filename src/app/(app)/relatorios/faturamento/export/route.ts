@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       0
     );
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
-    const lucro = frete - abastecimento - despesas - pedagio - comissao;
+    const lucro = frete - abastecimento - despesas - pedagio - comissao - diarias;
     return [
       placasUtilizadas(f.lancamentos, f.veiculo.placa),
       f.motorista?.nome,
