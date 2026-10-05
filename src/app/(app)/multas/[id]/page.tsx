@@ -8,7 +8,10 @@ export default async function MultaDetalhePage({ params }: { params: { id: strin
   const [multa, veiculos, motoristas] = await Promise.all([
     prisma.multa.findUnique({ where: { id: params.id }, include: { veiculo: true, motorista: true } }),
     prisma.veiculo.findMany({ select: { id: true, placa: true }, orderBy: { placa: "asc" } }),
-    prisma.motorista.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
+    prisma.motorista.findMany({
+      where: { OR: [{ ativo: true }, { multas: { some: { id: params.id } } }] },
+      select: { id: true, nome: true },
+      orderBy: { nome: "asc" } }),
   ]);
   if (!multa) notFound();
 

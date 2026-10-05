@@ -7,7 +7,7 @@ import RelatorioAcoes from "@/components/RelatorioAcoes";
 export default async function RelatorioVeiculosPage() {
   const [veiculos, statusList] = await Promise.all([
     prisma.veiculo.findMany({
-      include: { empresa: true, motoristasCadastrados: true },
+      include: { empresa: true, motoristasCadastrados: { where: { ativo: true } } },
       orderBy: { placa: "asc" },
     }),
     getStatusList(),

@@ -4,7 +4,7 @@ import NovoFaturamentoForm from "@/components/NovoFaturamentoForm";
 
 export default async function NovoFaturamentoPage() {
   const [motoristas, cavalos] = await Promise.all([
-    prisma.motorista.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
+    prisma.motorista.findMany({ where: { ativo: true }, select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
     prisma.veiculo.findMany({
       where: { carroceria: "CAVALO" },
       select: { id: true, placa: true, marcaModeloVersao: true },

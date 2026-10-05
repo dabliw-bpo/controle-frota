@@ -8,6 +8,7 @@ export async function GET() {
   if (!user) return new Response("Não autorizado", { status: 401 });
 
   const motoristas = await prisma.motorista.findMany({
+    where: { ativo: true },
     include: { veiculo: true },
     orderBy: { nome: "asc" },
   });

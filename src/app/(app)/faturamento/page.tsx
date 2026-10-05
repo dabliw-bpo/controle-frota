@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Wallet, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import SortableTh from "@/components/SortableTh";
+import { parseSituacao, situacaoWhere } from "@/lib/situacao";
 
 const SORT_FIELDS = ["nome"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -14,13 +15,16 @@ function getOrderBy(sort: string | undefined, dir: "asc" | "desc") {
 export default async function FaturamentoPage({
   searchParams,
 }: {
-  searchParams: { q?: string; sort?: string; dir?: string };
+  searchParams: { q?: string; sort?: string; dir?: string; situacao?: string };
 }) {
   const q = searchParams.q?.trim() || "";
   const dir: "asc" | "desc" = searchParams.dir === "desc" ? "desc" : "asc";
+  const situacao = parseSituacao(searchParams.situacao);
 
   const motoristas = await prisma.motorista.findMany({
-    where: q
+    where: {
+      ...situacaoWhere(situacao),
+      ...(q
       ? {
           OR: [
             { nome: { contains: q, mode: "insensitive" } },
@@ -28,7 +32,8 @@ export default async function FaturamentoPage({
             { veiculo: { placa: { contains: q, mode: "insensitive" } } },
           ],
         }
-      : {},
+      : {}),
+    },
     include: { veiculo: true },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
@@ -71,6 +76,11 @@ export default async function FaturamentoPage({
           placeholder="Buscar por motorista, CPF ou placa..."
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
         />
+        <select name="situacao" defaultValue={situacao} aria-label="Situação" className="input sm:w-40">
+          <option value="ativos">Ativos</option>
+          <option value="inativos">Inativos</option>
+          <option value="todos">Todos</option>
+        </select>
         <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
         </button>

@@ -6,7 +6,7 @@ import { criarMulta } from "../actions";
 export default async function NovaMultaPage() {
   const [veiculos, motoristas] = await Promise.all([
     prisma.veiculo.findMany({ select: { id: true, placa: true }, orderBy: { placa: "asc" } }),
-    prisma.motorista.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
+    prisma.motorista.findMany({ where: { ativo: true }, select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
   ]);
 
   return (

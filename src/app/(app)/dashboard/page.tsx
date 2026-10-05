@@ -87,7 +87,7 @@ export default async function DashboardPage({
       prisma.veiculo.groupBy({ by: ["status"], where: FROTA_ATIVA_WHERE, _count: { status: true } }),
       prisma.veiculo.groupBy({ by: ["carroceria"], where: FROTA_ATIVA_WHERE, _count: { carroceria: true } }),
       prisma.veiculo.groupBy({ by: ["empresaId"], where: FROTA_ATIVA_WHERE, _count: { empresaId: true } }),
-      prisma.motorista.count(),
+      prisma.motorista.count({ where: { ativo: true } }),
       prisma.veiculo.count({ where: { ...FROTA_ATIVA_WHERE, carroceria: "CARRO" } }),
       prisma.veiculo.findMany({ where: FROTA_ATIVA_WHERE, select: { valor: true } }),
       prisma.faturamentoMensal.findMany({

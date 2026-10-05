@@ -57,7 +57,7 @@ export default async function VeiculosPage({
           : {},
       ],
     },
-    include: { empresa: true, motoristasCadastrados: true },
+    include: { empresa: true, motoristasCadastrados: { where: { ativo: true } } },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
 

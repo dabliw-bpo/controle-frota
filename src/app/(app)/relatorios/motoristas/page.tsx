@@ -5,6 +5,7 @@ import RelatorioAcoes from "@/components/RelatorioAcoes";
 
 export default async function RelatorioMotoristasPage() {
   const motoristas = await prisma.motorista.findMany({
+    where: { ativo: true },
     include: { veiculo: true },
     orderBy: { nome: "asc" },
   });

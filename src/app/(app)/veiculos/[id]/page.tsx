@@ -25,7 +25,7 @@ export default async function VeiculoDetalhePage({ params }: { params: { id: str
       impostos: { orderBy: { ano: "desc" } },
       venda: true,
       locacao: true,
-      motoristasCadastrados: true,
+      motoristasCadastrados: { where: { ativo: true } },
     },
   });
 

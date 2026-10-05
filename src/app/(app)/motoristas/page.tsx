@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCpf } from "@/lib/cpf";
 import SortableTh from "@/components/SortableTh";
+import { parseSituacao, situacaoWhere } from "@/lib/situacao";
 
 const SORT_FIELDS = ["nome", "cpf", "cargo", "cadastro", "whatsapp", "placa"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -16,13 +17,16 @@ function getOrderBy(sort: string | undefined, dir: "asc" | "desc") {
 export default async function MotoristasPage({
   searchParams,
 }: {
-  searchParams: { q?: string; sort?: string; dir?: string };
+  searchParams: { q?: string; sort?: string; dir?: string; situacao?: string };
 }) {
   const q = searchParams.q?.trim() || "";
   const dir: "asc" | "desc" = searchParams.dir === "desc" ? "desc" : "asc";
+  const situacao = parseSituacao(searchParams.situacao);
 
   const motoristas = await prisma.motorista.findMany({
-    where: q
+    where: {
+      ...situacaoWhere(situacao),
+      ...(q
       ? {
           OR: [
             { nome: { contains: q, mode: "insensitive" } },
@@ -31,7 +35,8 @@ export default async function MotoristasPage({
             { veiculo: { placa: { contains: q, mode: "insensitive" } } },
           ],
         }
-      : {},
+      : {}),
+    },
     include: { veiculo: true },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
@@ -61,6 +66,11 @@ export default async function MotoristasPage({
           placeholder="Buscar por nome, CPF, cargo ou placa..."
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
         />
+        <select name="situacao" defaultValue={situacao} aria-label="Situação" className="input sm:w-40">
+          <option value="ativos">Ativos</option>
+          <option value="inativos">Inativos</option>
+          <option value="todos">Todos</option>
+        </select>
         <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
         </button>
@@ -85,6 +95,11 @@ export default async function MotoristasPage({
                   <Link href={`/motoristas/${m.id}`} className="font-medium text-brand-600 hover:underline">
                     {m.nome}
                   </Link>
+                  {!m.ativo && (
+                    <span className="ml-2 inline-flex rounded-full border border-slate-300 px-2 py-0.5 text-xs text-slate-500">
+                      Inativo
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-slate-600">{m.cpf ? formatCpf(m.cpf) : "—"}</td>
                 <td className="px-4 py-3 text-slate-600">{m.cargo || "—"}</td>

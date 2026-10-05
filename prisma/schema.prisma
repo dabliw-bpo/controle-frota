@@ -177,6 +177,7 @@ model Motorista {
   email      String?
   whatsapp   String?
   pix        String?
+  ativo      Boolean  @default(true) // false = motorista desativado (some das listas e seleções)
 
   veiculoId  String?
   veiculo    Veiculo? @relation(fields: [veiculoId], references: [id], onDelete: SetNull)

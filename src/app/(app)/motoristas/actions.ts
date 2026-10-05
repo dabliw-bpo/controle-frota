@@ -80,6 +80,14 @@ export async function atualizarMotorista(motoristaId: string, formData: FormData
   revalidatePath("/motoristas");
 }
 
+export async function definirAtivoMotorista(motoristaId: string, ativo: boolean) {
+  await requireEditor();
+  await prisma.motorista.update({ where: { id: motoristaId }, data: { ativo } });
+  revalidatePath(`/motoristas/${motoristaId}`);
+  revalidatePath("/motoristas");
+  revalidatePath("/faturamento");
+}
+
 export async function excluirMotorista(motoristaId: string) {
   await requireEditor();
   await prisma.motorista.delete({ where: { id: motoristaId } });

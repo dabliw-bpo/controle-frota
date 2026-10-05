@@ -28,7 +28,7 @@ export default async function FaturamentoVeiculoPage({
   const [veiculo, clientes, veiculosCavalo] = await Promise.all([
     prisma.veiculo.findUnique({
       where: { id: params.veiculoId },
-      include: { motoristasCadastrados: true },
+      include: { motoristasCadastrados: { where: { ativo: true } } },
     }),
     prisma.cliente.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
     prisma.veiculo.findMany({

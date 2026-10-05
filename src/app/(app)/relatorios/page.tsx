@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export default async function RelatoriosPage() {
   const [totalVeiculos, totalMotoristas, totalFaturamentos] = await Promise.all([
     prisma.veiculo.count(),
-    prisma.motorista.count(),
+    prisma.motorista.count({ where: { ativo: true } }),
     prisma.faturamentoMensal.count(),
   ]);
 
