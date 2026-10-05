@@ -2,18 +2,18 @@ export type PieSlice = { label: string; value: number; color: string };
 
 // Paleta categórica usada quando o dado não tem cor própria (tipo, empresa).
 export const PIE_PALETTE = [
-  "#3b82f6", // blue-500
-  "#10b981", // emerald-500
-  "#f59e0b", // amber-500
-  "#a855f7", // purple-500
-  "#ec4899", // pink-500
-  "#6366f1", // indigo-500
-  "#14b8a6", // teal-500
-  "#06b6d4", // cyan-500
-  "#f97316", // orange-500
-  "#64748b", // slate-500
-  "#ef4444", // red-500
-  "#84cc16", // lime-500
+  "#6e5a35", // bronze (destaque)
+  "#3d6b37", // verde (sucesso)
+  "#c9a96e", // dourado claro
+  "#b3432a", // terracota (erro)
+  "#57524a", // cinza quente
+  "#8a7d5c", // oliva
+  "#7f9a6b", // sálvia
+  "#d4a373", // areia
+  "#9c6b4e", // cobre
+  "#a8a196", // pedra
+  "#4f4026", // bronze escuro
+  "#c4553b", // ferrugem
 ];
 
 // Mapeia o nome de cor usado nos badges de status (COR_PALETA) para um hex,

@@ -12,7 +12,8 @@ export default async function RelatoriosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Relatórios</h1>
+        <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Análises</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Relatórios</h1>
         <p className="text-slate-500 text-sm mt-1">
           Relatórios de cadastro e de faturamento, prontos para imprimir ou exportar
         </p>
@@ -61,7 +62,7 @@ function ReportCard({
   return (
     <Link
       href={href}
-      className="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-400 hover:shadow-card transition-all block"
+      className="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-400 transition-all block"
     >
       <div className="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
         <Icon size={20} strokeWidth={2} />

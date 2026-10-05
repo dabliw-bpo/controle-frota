@@ -117,7 +117,8 @@ export default async function RelatorioFaturamentoPage({
           <Link href="/relatorios" className="no-print text-sm text-brand-600 hover:underline">
             ← Voltar para Relatórios
           </Link>
-          <h1 className="text-2xl font-bold text-slate-900 mt-2">Relatório de Faturamento</h1>
+          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-brand-500">Análises</p>
+          <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Relatório de Faturamento</h1>
           <p className="text-slate-500 text-sm mt-1">
             {MESES[mes - 1]}/{ano} · {linhas.length} placa(s)
           </p>
@@ -185,7 +186,7 @@ export default async function RelatorioFaturamentoPage({
             className="input uppercase"
           />
         </label>
-        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+        <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
           Filtrar
         </button>
       </form>

@@ -72,7 +72,8 @@ export default async function FaturamentoVeiculoPage({
         <Link href="/faturamento" className="text-sm text-brand-600 hover:underline">
           ← Voltar para Faturamento
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">
+        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-brand-500">Financeiro</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">
           Faturamento — {motoristaEfetivo?.nome ?? veiculo.placa}
         </h1>
       </div>
@@ -110,7 +111,7 @@ export default async function FaturamentoVeiculoPage({
             </select>
           </label>
         )}
-        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
+        <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Ver período
         </button>
       </form>

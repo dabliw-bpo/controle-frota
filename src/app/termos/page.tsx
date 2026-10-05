@@ -19,10 +19,10 @@ export default async function TermosPage() {
   const config = await getConfiguracao();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4 py-10">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-10">
+      <div className="w-full max-w-2xl bg-white rounded-xl border border-slate-200 p-8">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Termo de Uso e Política de Privacidade</h1>
+          <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Termo de Uso e Política de Privacidade</h1>
           <p className="text-sm text-slate-500 mt-1">
             Leia com atenção antes de continuar. A confirmação é solicitada apenas uma vez.
           </p>
@@ -102,7 +102,7 @@ export default async function TermosPage() {
               type="checkbox"
               name="aceite"
               required
-              className="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              className="mt-0.5 rounded border-slate-300 text-brand-600 focus:border-brand-500 focus:ring-brand-500/20"
             />
             Li e aceito o Termo de Uso e a Política de Privacidade descritos acima.
           </label>

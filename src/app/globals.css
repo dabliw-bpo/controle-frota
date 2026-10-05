@@ -2,18 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  color: #1e293b;
-  background: #f4f6f9;
+@layer base {
+  body {
+    color: #1f1d19;
+    background: #f6f5f2;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+
+  td,
+  th {
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead th {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  ::selection {
+    background: rgb(201 169 110 / 0.35);
+  }
 }
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500;
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50;
+  }
+
+  .numeros {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 @media print {
+  header,
   aside,
   .no-print {
     display: none !important;

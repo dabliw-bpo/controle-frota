@@ -123,10 +123,10 @@ export default function MultasExportButtons({
 
       const doc = new jsPDF({ orientation: "landscape" });
       doc.setFontSize(14);
-      doc.setTextColor(30, 41, 59);
+      doc.setTextColor(31, 29, 25);
       doc.text("Multas de Trânsito", 14, 15);
       doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(87, 82, 74);
       doc.text(subtitle, 14, 21);
 
       autoTable(doc, {
@@ -136,16 +136,16 @@ export default function MultasExportButtons({
           row.map((v, i) => (i === 7 && typeof v === "number" ? formatCurrency(v) : v))
         ),
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: [110, 90, 53], textColor: 255 },
+        alternateRowStyles: { fillColor: [246, 245, 242] },
       });
 
       doc.addPage();
       doc.setFontSize(13);
-      doc.setTextColor(30, 41, 59);
+      doc.setTextColor(31, 29, 25);
       doc.text("Total por Data de Vencimento", 14, 15);
       doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(87, 82, 74);
       doc.text("Não considera registros já marcados como pagos.", 14, 20);
 
       autoTable(doc, {
@@ -159,16 +159,16 @@ export default function MultasExportButtons({
           v.qtd,
         ]),
         styles: { fontSize: 9, cellPadding: 2.5 },
-        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: [110, 90, 53], textColor: 255 },
+        alternateRowStyles: { fillColor: [246, 245, 242] },
       });
 
       doc.addPage();
       doc.setFontSize(13);
-      doc.setTextColor(30, 41, 59);
+      doc.setTextColor(31, 29, 25);
       doc.text("Curva ABC de Placas por Despesa", 14, 15);
       doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(87, 82, 74);
       doc.text("Não considera registros já marcados como pagos.", 14, 20);
 
       autoTable(doc, {
@@ -178,14 +178,14 @@ export default function MultasExportButtons({
           row.map((v, i) => (i === 2 && typeof v === "number" ? formatCurrency(v) : i === 3 || i === 4 ? `${v}%` : v))
         ),
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: [110, 90, 53], textColor: 255 },
+        alternateRowStyles: { fillColor: [246, 245, 242] },
         didParseCell: (data) => {
           if (data.section === "body" && data.column.index === 5) {
             const classe = data.cell.raw;
-            if (classe === "A") data.cell.styles.textColor = [185, 28, 28];
-            else if (classe === "B") data.cell.styles.textColor = [180, 83, 9];
-            else data.cell.styles.textColor = [100, 116, 139];
+            if (classe === "A") data.cell.styles.textColor = [179, 67, 42];
+            else if (classe === "B") data.cell.styles.textColor = [122, 102, 64];
+            else data.cell.styles.textColor = [115, 109, 98];
             data.cell.styles.fontStyle = "bold";
           }
         },
@@ -203,7 +203,7 @@ export default function MultasExportButtons({
         type="button"
         onClick={handleExportarExcel}
         disabled={gerandoExcel}
-        className="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+        className="inline-flex items-center gap-1.5 border border-slate-300 hover:border-brand-500 hover:text-brand-600 disabled:opacity-60 text-slate-900 text-sm font-medium rounded-lg px-4 py-2.5"
       >
         <FileSpreadsheet size={16} strokeWidth={2} />
         {gerandoExcel ? "Gerando..." : "Exportar Excel"}
@@ -212,7 +212,7 @@ export default function MultasExportButtons({
         type="button"
         onClick={handleExportarPdf}
         disabled={gerandoPdf}
-        className="inline-flex items-center gap-1.5 bg-danger-600 hover:bg-danger-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+        className="inline-flex items-center gap-1.5 border border-slate-300 hover:border-brand-500 hover:text-brand-600 disabled:opacity-60 text-slate-900 text-sm font-medium rounded-lg px-4 py-2.5"
       >
         <FileText size={16} strokeWidth={2} />
         {gerandoPdf ? "Gerando..." : "Exportar PDF"}

@@ -8,7 +8,8 @@ export default async function NovoMotoristaPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Novo motorista</h1>
+        <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Pessoas</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Novo motorista</h1>
         <p className="text-slate-500 text-sm mt-1">Cadastre um motorista</p>
       </div>
 

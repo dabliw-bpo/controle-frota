@@ -38,7 +38,8 @@ export default async function ConfiguracoesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
+        <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Sistema</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Configurações</h1>
         <p className="text-slate-500 text-sm mt-1">
           Gerencie os cadastros e opções usadas em todo o sistema
         </p>
@@ -128,7 +129,7 @@ export default async function ConfiguracoesPage() {
               ))}
             </select>
           </label>
-          <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+          <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
             + Novo status
           </button>
         </form>
@@ -151,7 +152,7 @@ export default async function ConfiguracoesPage() {
           </div>
           <form action={criarTipo} className="flex gap-2 border-t border-slate-100 pt-4">
             <input name="nome" placeholder="Ex: BAÚ" className="input" required />
-            <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 whitespace-nowrap">
+            <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 whitespace-nowrap">
               + Adicionar
             </button>
           </form>
@@ -173,7 +174,7 @@ export default async function ConfiguracoesPage() {
           </div>
           <form action={criarCargo} className="flex gap-2 border-t border-slate-100 pt-4">
             <input name="nome" placeholder="Ex: AJUDANTE" className="input" required />
-            <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 whitespace-nowrap">
+            <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 whitespace-nowrap">
               + Adicionar
             </button>
           </form>
@@ -197,7 +198,7 @@ export default async function ConfiguracoesPage() {
           </div>
           <form action={criarTipoMotorista} className="flex gap-2 border-t border-slate-100 pt-4">
             <input name="nome" placeholder="Ex: TERCEIRIZADO" className="input" required />
-            <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 whitespace-nowrap">
+            <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 whitespace-nowrap">
               + Adicionar
             </button>
           </form>
@@ -212,7 +213,7 @@ export default async function ConfiguracoesPage() {
         </div>
         <Link
           href="/usuarios"
-          className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2"
+          className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2"
         >
           Gerenciar usuários
         </Link>

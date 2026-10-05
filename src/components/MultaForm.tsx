@@ -93,7 +93,7 @@ export default function MultaForm({
                 type="checkbox"
                 name="descontarMotorista"
                 defaultChecked={initial?.descontarMotorista ?? false}
-                className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                className="rounded border-slate-300 text-brand-600 focus:border-brand-500 focus:ring-brand-500/20"
               />
               <span className="font-medium text-slate-700">Descontar valor da multa do motorista</span>
             </label>

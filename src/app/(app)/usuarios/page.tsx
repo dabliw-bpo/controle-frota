@@ -29,7 +29,8 @@ export default async function UsuariosPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Usuários</h1>
+        <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Acesso</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Usuários</h1>
         <p className="text-slate-500 text-sm mt-1">Gerencie quem tem acesso ao sistema</p>
       </div>
 

@@ -146,7 +146,8 @@ export default async function MultasPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Multas de Trânsito</h1>
+          <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Trânsito</p>
+          <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Multas de Trânsito</h1>
           <p className="text-slate-500 text-sm mt-1">{subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -180,19 +181,19 @@ export default async function MultasPage({
           name="q"
           defaultValue={q}
           placeholder="Buscar por placa, motorista ou descrição..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
         />
-        <select name="tipo" defaultValue={tipo} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <select name="tipo" defaultValue={tipo} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20">
           <option value="">Todos os tipos</option>
           <option value="MULTA">Multa</option>
           <option value="LICENCIAMENTO">Licenciamento</option>
         </select>
-        <select name="pago" defaultValue={pagoFiltro} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <select name="pago" defaultValue={pagoFiltro} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20">
           <option value="">Pago e pendente</option>
           <option value="PENDENTE">Somente pendentes</option>
           <option value="PAGO">Somente pagos</option>
         </select>
-        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
+        <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
         </button>
       </form>

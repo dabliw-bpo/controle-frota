@@ -36,10 +36,10 @@ function LoginFormInner({ nomeSistema, subtitulo }: { nomeSistema: string; subti
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm bg-white rounded-xl border border-slate-200 p-8">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">{nomeSistema}</h1>
+          <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">{nomeSistema}</h1>
           {subtitulo && <p className="text-sm text-slate-500 mt-1">{subtitulo}</p>}
         </div>
 
@@ -55,7 +55,7 @@ function LoginFormInner({ nomeSistema, subtitulo }: { nomeSistema: string; subti
               required
               value={cpf}
               onChange={(e) => setCpf(formatCpf(e.target.value))}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
               placeholder="000.000.000-00"
               maxLength={14}
             />
@@ -70,7 +70,7 @@ function LoginFormInner({ nomeSistema, subtitulo }: { nomeSistema: string; subti
               required
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
               placeholder="••••••••"
             />
           </div>

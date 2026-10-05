@@ -348,7 +348,7 @@ export default function FaturamentoEditor({
 
       const doc = new jsPDF({ orientation: "landscape" });
       doc.setFontSize(14);
-      doc.setTextColor(30, 41, 59);
+      doc.setTextColor(31, 29, 25);
       doc.text(tituloExport(), 14, 15);
 
       autoTable(doc, {
@@ -379,14 +379,14 @@ export default function FaturamentoEditor({
           ]),
         ],
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-        footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: [110, 90, 53], textColor: 255 },
+        footStyles: { fillColor: [241, 239, 234], textColor: [31, 29, 25], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [246, 245, 242] },
       });
 
       const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
       doc.setFontSize(11);
-      doc.setTextColor(30, 41, 59);
+      doc.setTextColor(31, 29, 25);
       doc.text("Diárias", 14, finalY + 10);
 
       autoTable(doc, {
@@ -395,9 +395,9 @@ export default function FaturamentoEditor({
         body: diariasExport().map((row) => row.map((v) => (typeof v === "number" ? formatCurrency(v) : v))),
         foot: [["Total de diárias", "", "", formatCurrency(totalDiarias)]],
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-        footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
+        headStyles: { fillColor: [110, 90, 53], textColor: 255 },
+        footStyles: { fillColor: [241, 239, 234], textColor: [31, 29, 25], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [246, 245, 242] },
         tableWidth: 200,
       });
 
@@ -515,7 +515,7 @@ export default function FaturamentoEditor({
                   <select
                     value={l.placa}
                     onChange={(e) => atualizarCelula(idx, "placa", e.target.value)}
-                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20 bg-white"
                   >
                     <option value="">— Selecionar —</option>
                     {placasCavalo.map((p) => (
@@ -532,7 +532,7 @@ export default function FaturamentoEditor({
                     <select
                       value={l.clienteId}
                       onChange={(e) => atualizarCelula(idx, "clienteId", e.target.value)}
-                      className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                      className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20 bg-white"
                     >
                       <option value="">— Selecionar —</option>
                       {clientesLista.map((c) => (
@@ -630,7 +630,7 @@ export default function FaturamentoEditor({
                   <select
                     value={d.placa}
                     onChange={(e) => atualizarCelulaDiaria(idx, "placa", e.target.value)}
-                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20 bg-white"
                   >
                     <option value="">— Selecionar —</option>
                     {placasCavalo.map((p) => (
@@ -670,7 +670,7 @@ export default function FaturamentoEditor({
           <button
             type="button"
             onClick={adicionarDiaria}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+            className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
           >
             <Plus size={16} strokeWidth={2.5} />
             Adicionar diária
@@ -687,7 +687,7 @@ export default function FaturamentoEditor({
         <button
           type="button"
           onClick={adicionarLinha}
-          className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+          className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5"
         >
           <Plus size={16} strokeWidth={2.5} />
           Adicionar linha
@@ -705,7 +705,7 @@ export default function FaturamentoEditor({
           type="button"
           onClick={handleExportarExcel}
           disabled={gerandoExcel}
-          className="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+          className="inline-flex items-center gap-1.5 border border-slate-300 hover:border-brand-500 hover:text-brand-600 disabled:opacity-60 text-slate-900 text-sm font-medium rounded-lg px-4 py-2.5"
         >
           <FileSpreadsheet size={16} strokeWidth={2} />
           {gerandoExcel ? "Gerando..." : "Exportar Excel"}
@@ -714,7 +714,7 @@ export default function FaturamentoEditor({
           type="button"
           onClick={handleExportarPdf}
           disabled={gerandoPdf}
-          className="inline-flex items-center gap-1.5 bg-danger-600 hover:bg-danger-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg px-4 py-2.5"
+          className="inline-flex items-center gap-1.5 border border-slate-300 hover:border-brand-500 hover:text-brand-600 disabled:opacity-60 text-slate-900 text-sm font-medium rounded-lg px-4 py-2.5"
         >
           <FileText size={16} strokeWidth={2} />
           {gerandoPdf ? "Gerando..." : "Exportar PDF"}
@@ -725,7 +725,7 @@ export default function FaturamentoEditor({
 
       {novoClienteLinha !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-lg w-full max-w-sm p-5">
+          <div className="bg-white rounded-xl border border-slate-200 w-full max-w-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-slate-900">Novo cliente</h3>
               <button
@@ -747,7 +747,7 @@ export default function FaturamentoEditor({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCriarCliente();
                 }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
                 placeholder="Nome do cliente"
               />
             </label>
@@ -796,7 +796,7 @@ function Cell({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        className="w-full min-w-0 rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
       />
     </td>
   );

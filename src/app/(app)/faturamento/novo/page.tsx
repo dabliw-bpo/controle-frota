@@ -18,7 +18,8 @@ export default async function NovoFaturamentoPage() {
         <Link href="/faturamento" className="text-sm text-brand-600 hover:underline">
           ← Voltar para Faturamento
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">Novo faturamento</h1>
+        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-brand-500">Financeiro</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Novo faturamento</h1>
         <p className="text-slate-500 text-sm mt-1">
           Escolha o motorista e a placa (cavalo) para lançar o faturamento do período
         </p>

@@ -65,7 +65,8 @@ export default async function VeiculosPage({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Veículos</h1>
+          <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Frota</p>
+          <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Veículos</h1>
           <p className="text-slate-500 text-sm mt-1">{veiculos.length} registro(s)</p>
         </div>
         <Link
@@ -83,12 +84,12 @@ export default async function VeiculosPage({
           name="q"
           defaultValue={q}
           placeholder="Buscar por placa, modelo, motorista..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
         />
         <select
           name="status"
           defaultValue={status}
-          className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
         >
           <option value="">Todos os status</option>
           {statusList.map((s) => (
@@ -97,7 +98,7 @@ export default async function VeiculosPage({
             </option>
           ))}
         </select>
-        <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2.5">
+        <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2.5">
           Filtrar
         </button>
       </form>

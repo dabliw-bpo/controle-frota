@@ -42,7 +42,8 @@ export default async function VeiculoDetalhePage({ params }: { params: { id: str
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{veiculo.placa}</h1>
+          <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Frota</p>
+          <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">{veiculo.placa}</h1>
           <p className="text-slate-500 text-sm mt-1">
             {veiculo.carroceria} · {veiculo.marcaModeloVersao || "sem modelo informado"}
           </p>
@@ -230,7 +231,7 @@ export default async function VeiculoDetalhePage({ params }: { params: { id: str
           <input name="nomeImpresso" placeholder="Nome impresso" className="input max-w-[180px]" />
           <input name="numeroCartao" placeholder="Número do cartão" className="input max-w-[180px]" />
           <input name="frotaNumero" placeholder="Frota nº" className="input max-w-[100px]" />
-          <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2">
+          <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2">
             Adicionar
           </button>
         </form>
@@ -279,7 +280,7 @@ export default async function VeiculoDetalhePage({ params }: { params: { id: str
           <LabeledInput label="Valor licenciamento" name="licenciamentoValor" type="number" step="0.01" />
           <LabeledInput label="Venc. IPVA" name="ipvaVencimento" />
           <LabeledInput label="Multas" name="multasValor" type="number" step="0.01" />
-          <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+          <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
             Salvar
           </button>
         </form>
@@ -317,7 +318,7 @@ function LabeledInput({
 
 function SaveButton() {
   return (
-    <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2">
+    <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2">
       Salvar
     </button>
   );

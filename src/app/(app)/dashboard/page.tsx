@@ -228,7 +228,8 @@ export default async function DashboardPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Painel</h1>
+        <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Visão geral</p>
+        <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Painel</h1>
         <p className="text-slate-500 text-sm mt-1">
           Visão geral da frota ativa (não inclui alugados/vendidos)
         </p>
@@ -261,7 +262,7 @@ export default async function DashboardPage({
                 ))}
               </select>
             </label>
-            <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+            <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
               Filtrar
             </button>
           </form>
@@ -366,7 +367,7 @@ export default async function DashboardPage({
                 ))}
               </select>
             </label>
-            <button className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
+            <button className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg px-4 py-2 h-[38px]">
               Filtrar
             </button>
           </form>
@@ -457,8 +458,8 @@ function StatCard({
         colSpan === 2 ? "col-span-2" : ""
       }`}
     >
-      <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
-      <p className="text-lg xl:text-xl font-bold text-slate-900 mt-1 whitespace-nowrap overflow-x-auto">
+      <p className="text-xs uppercase tracking-[0.12em] text-slate-600 truncate">{label}</p>
+      <p className="text-lg xl:text-2xl text-slate-900 mt-2 whitespace-nowrap overflow-x-auto numeros">
         {value}
       </p>
     </div>

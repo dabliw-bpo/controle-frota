@@ -8,7 +8,7 @@ export type AbcRow = {
   classe: "A" | "B" | "C";
 };
 
-const CLASSE_COLOR: Record<"A" | "B" | "C", string> = { A: "#ef4444", B: "#f59e0b", C: "#94a3b8" };
+const CLASSE_COLOR: Record<"A" | "B" | "C", string> = { A: "#b3432a", B: "#c9a96e", C: "#a8a196" };
 const CLASSE_BADGE: Record<"A" | "B" | "C", string> = {
   A: "bg-red-100 text-red-800",
   B: "bg-amber-100 text-amber-800",
@@ -39,8 +39,8 @@ export default function MultasCurvaAbc({ linhas }: { linhas: AbcRow[] }) {
             const y = chartBottom - (marca / 100) * chartHeight;
             return (
               <g key={marca}>
-                <line x1={0} x2={width} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 3" />
-                <text x={width - 2} y={y - 3} textAnchor="end" fontSize="9" fill="#94a3b8">
+                <line x1={0} x2={width} y1={y} y2={y} stroke="#e6e3dc" strokeDasharray="4 3" />
+                <text x={width - 2} y={y - 3} textAnchor="end" fontSize="9" fill="#736d62">
                   {marca}%
                 </text>
               </g>
@@ -58,11 +58,11 @@ export default function MultasCurvaAbc({ linhas }: { linhas: AbcRow[] }) {
           <polyline
             points={pontos.map((p) => `${p.x},${p.y}`).join(" ")}
             fill="none"
-            stroke="#0f172a"
+            stroke="#1f1d19"
             strokeWidth="1.75"
           />
           {pontos.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="2.25" fill="#0f172a" />
+            <circle key={i} cx={p.x} cy={p.y} r="2.25" fill="#1f1d19" />
           ))}
         </svg>
       </div>
