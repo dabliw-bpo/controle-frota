@@ -21,29 +21,15 @@ const MESES = [
 
 const COMISSAO_PERCENTUAL = 0.12;
 
-const SORT_FIELDS = [
-  "placa",
-  "motorista",
-  "frete",
-  "despesas",
-  "abastecimento",
-  "pedagio",
-  "comissao",
-  "diarias",
-  "lucro",
-] as const;
+const SORT_FIELDS = ["placa", "motorista", "frete", "comissao", "diarias", "total"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
 
 type ComCampoOrdenavel = {
   placas: string;
   motorista: { nome: string } | null;
   frete: number;
-  despesas: number;
-  abastecimento: number;
-  pedagio: number;
   comissao: number;
   diarias: number;
-  lucro: number;
 };
 
 function ordenar<T extends ComCampoOrdenavel>(linhas: T[], sort: string | undefined, dir: "asc" | "desc"): T[] {
@@ -53,6 +39,7 @@ function ordenar<T extends ComCampoOrdenavel>(linhas: T[], sort: string | undefi
     if (field === "placa") return mult * a.placas.localeCompare(b.placas);
     if (field === "motorista")
       return mult * (a.motorista?.nome ?? "").localeCompare(b.motorista?.nome ?? "");
+    if (field === "total") return mult * (a.comissao + a.diarias - (b.comissao + b.diarias));
     return mult * (a[field] - b[field]);
   });
 }
@@ -90,17 +77,13 @@ export default async function RelatorioFaturamentoPage({
 
   const linhasBrutas = faturamentos.map((f) => {
     const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
-    const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
-    const despesas = f.lancamentos.reduce((acc, l) => acc + (l.despesas ?? 0), 0);
-    const pedagio = f.lancamentos.reduce((acc, l) => acc + (l.pedagio ?? 0), 0);
     const comissao = f.lancamentos.reduce(
       (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
       0
     );
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
-    const lucro = frete - abastecimento - despesas - pedagio - comissao - diarias;
     const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
-    return { ...f, frete, abastecimento, despesas, pedagio, comissao, diarias, lucro, placas };
+    return { ...f, frete, comissao, diarias, placas };
   });
 
   const linhas = ordenar(linhasBrutas, searchParams.sort, dirAtual);
@@ -108,26 +91,19 @@ export default async function RelatorioFaturamentoPage({
   const totais = linhas.reduce(
     (acc, l) => ({
       frete: acc.frete + l.frete,
-      abastecimento: acc.abastecimento + l.abastecimento,
-      despesas: acc.despesas + l.despesas,
-      pedagio: acc.pedagio + l.pedagio,
       comissao: acc.comissao + l.comissao,
       diarias: acc.diarias + l.diarias,
-      lucro: acc.lucro + l.lucro,
     }),
-    { frete: 0, abastecimento: 0, despesas: 0, pedagio: 0, comissao: 0, diarias: 0, lucro: 0 }
+    { frete: 0, comissao: 0, diarias: 0 }
   );
 
   const pdfRows = linhas.map((l) => [
     l.placas,
     l.motorista?.nome ?? "—",
     formatCurrency(l.frete),
-    formatCurrency(l.despesas),
-    formatCurrency(l.abastecimento),
-    formatCurrency(l.pedagio),
     formatCurrency(l.comissao),
     formatCurrency(l.diarias),
-    formatCurrency(l.lucro),
+    formatCurrency(l.comissao + l.diarias),
   ]);
 
   const exportParams = new URLSearchParams({ ano: String(ano), mes: String(mes) });
@@ -152,19 +128,16 @@ export default async function RelatorioFaturamentoPage({
             title: "Relatório de Faturamento",
             subtitle: `${MESES[mes - 1]}/${ano} · ${linhas.length} placa(s)`,
             filename: `faturamento-${mes}-${ano}.pdf`,
-            headers: ["Placa", "Motorista", "Vlr. Frete", "Despesas", "Abastecimento", "Pedágio", "Comissão", "Diárias", "Lucro"],
+            headers: ["Placa", "Motorista", "Vlr. Frete", "Comissão", "Diárias", "Comissão + Diárias"],
             rows: pdfRows,
             foot: [
               [
                 "Total",
                 "",
                 formatCurrency(totais.frete),
-                formatCurrency(totais.despesas),
-                formatCurrency(totais.abastecimento),
-                formatCurrency(totais.pedagio),
                 formatCurrency(totais.comissao),
                 formatCurrency(totais.diarias),
-                formatCurrency(totais.lucro),
+                formatCurrency(totais.comissao + totais.diarias),
               ],
             ],
           }}
@@ -224,12 +197,9 @@ export default async function RelatorioFaturamentoPage({
               <SortableTh label="Placa" sortKey="placa" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Motorista" sortKey="motorista" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Vlr. Frete" sortKey="frete" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
-              <SortableTh label="Despesas" sortKey="despesas" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
-              <SortableTh label="Abastecimento" sortKey="abastecimento" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
-              <SortableTh label="Pedágio" sortKey="pedagio" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Comissão" sortKey="comissao" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
               <SortableTh label="Diárias" sortKey="diarias" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
-              <SortableTh label="Lucro" sortKey="lucro" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
+              <SortableTh label="Comissão + Diárias" sortKey="total" currentSort={searchParams.sort} currentDir={dirAtual} searchParams={searchParams} />
             </tr>
           </thead>
           <tbody>
@@ -238,23 +208,16 @@ export default async function RelatorioFaturamentoPage({
                 <td className="px-4 py-2 font-medium whitespace-nowrap">{l.placas}</td>
                 <td className="px-4 py-2 text-slate-600">{l.motorista?.nome ?? "—"}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.frete)}</td>
-                <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.despesas)}</td>
-                <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.abastecimento)}</td>
-                <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.pedagio)}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.comissao)}</td>
                 <td className="px-4 py-2 text-slate-600 text-right whitespace-nowrap">{formatCurrency(l.diarias)}</td>
-                <td
-                  className={`px-4 py-2 font-medium text-right whitespace-nowrap ${
-                    l.lucro >= 0 ? "text-emerald-700" : "text-red-600"
-                  }`}
-                >
-                  {formatCurrency(l.lucro)}
+                <td className="px-4 py-2 font-medium text-right whitespace-nowrap text-emerald-700">
+                  {formatCurrency(l.comissao + l.diarias)}
                 </td>
               </tr>
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                   Nenhum faturamento lançado neste período.
                 </td>
               </tr>
@@ -267,17 +230,10 @@ export default async function RelatorioFaturamentoPage({
                   Total
                 </td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.frete)}</td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.despesas)}</td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.abastecimento)}</td>
-                <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.pedagio)}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.comissao)}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totais.diarias)}</td>
-                <td
-                  className={`px-4 py-3 text-right whitespace-nowrap ${
-                    totais.lucro >= 0 ? "text-emerald-700" : "text-red-600"
-                  }`}
-                >
-                  {formatCurrency(totais.lucro)}
+                <td className="px-4 py-3 text-right whitespace-nowrap text-emerald-700">
+                  {formatCurrency(totais.comissao + totais.diarias)}
                 </td>
               </tr>
             </tfoot>

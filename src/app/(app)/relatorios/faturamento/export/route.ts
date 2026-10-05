@@ -36,30 +36,23 @@ export async function GET(request: NextRequest) {
 
   const linhas = faturamentos.map((f) => {
     const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
-    const abastecimento = f.lancamentos.reduce((acc, l) => acc + (l.abastecimento ?? 0), 0);
-    const despesas = f.lancamentos.reduce((acc, l) => acc + (l.despesas ?? 0), 0);
-    const pedagio = f.lancamentos.reduce((acc, l) => acc + (l.pedagio ?? 0), 0);
     const comissao = f.lancamentos.reduce(
       (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
       0
     );
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
-    const lucro = frete - abastecimento - despesas - pedagio - comissao - diarias;
     return [
       placasUtilizadas(f.lancamentos, f.veiculo.placa),
       f.motorista?.nome,
       frete,
-      despesas,
-      abastecimento,
-      pedagio,
       comissao,
       diarias,
-      lucro,
+      comissao + diarias,
     ];
   });
 
   const csv = toCsv(
-    ["Placa", "Motorista", "Vlr. Frete", "Despesas", "Abastecimento", "Pedágio", "Comissão", "Diárias", "Lucro"],
+    ["Placa", "Motorista", "Vlr. Frete", "Comissão", "Diárias", "Comissão + Diárias"],
     linhas
   );
 
