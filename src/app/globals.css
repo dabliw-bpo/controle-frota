@@ -62,4 +62,18 @@
   body {
     background: white !important;
   }
+  .relatorio-impressao table {
+    font-size: 10px;
+  }
+  .relatorio-impressao td,
+  .relatorio-impressao th {
+    padding: 3px 5px !important;
+  }
+  .relatorio-impressao a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .relatorio-impressao thead {
+    display: table-header-group;
+  }
 }

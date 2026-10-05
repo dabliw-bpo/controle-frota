@@ -3,10 +3,13 @@ import { Wallet, Plus, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import SortableTh from "@/components/SortableTh";
+import BotaoImprimir from "@/components/BotaoImprimir";
 import { parseSituacao, situacaoWhere } from "@/lib/situacao";
 
 const COMISSAO_PERCENTUAL = 0.12;
 const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+const SITUACAO_LABEL = { ativos: "Motoristas ativos", inativos: "Motoristas inativos", todos: "Todos os motoristas" } as const;
 
 const SORT_FIELDS = ["nome"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -79,16 +82,22 @@ export default async function FaturamentoPage({
   const totalGeral = totaisMes.reduce((acc, v) => acc + v, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="relatorio-impressao space-y-6">
+      <style>{`@media print { @page { size: A4 landscape; margin: 8mm; } }`}</style>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-brand-500">Financeiro</p>
           <h1 className="mt-1 text-2xl font-medium text-slate-900 sm:text-3xl">Faturamento</h1>
+          <p className="hidden print:block text-sm text-slate-700 mt-1">
+            Comissão + diárias por motorista, mês a mês · {ano} · {SITUACAO_LABEL[situacao]} · emitido em{" "}
+            {new Date().toLocaleDateString("pt-BR")}
+          </p>
           <p className="text-slate-500 text-sm mt-1">
             {motoristas.length} motorista(s) · {comPlaca} com placa vinculada
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="no-print flex gap-2">
+          <BotaoImprimir />
           <Link
             href="/faturamento/clientes"
             className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-medium rounded-lg px-4 py-2.5"
@@ -106,7 +115,7 @@ export default async function FaturamentoPage({
         </div>
       </div>
 
-      <form className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200">
+      <form className="no-print flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl border border-slate-200">
         <input
           type="text"
           name="q"
@@ -131,7 +140,7 @@ export default async function FaturamentoPage({
         </button>
       </form>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto print:overflow-visible print:border-0 print:rounded-none">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-slate-500 border-b border-slate-100 bg-slate-50">
@@ -142,7 +151,7 @@ export default async function FaturamentoPage({
                 </th>
               ))}
               <th className="px-4 py-3 text-right whitespace-nowrap">Total {ano}</th>
-              <th className="px-4 py-3 text-right">Faturar</th>
+              <th className="px-4 py-3 text-right print:hidden">Faturar</th>
             </tr>
           </thead>
           <tbody>
@@ -150,7 +159,7 @@ export default async function FaturamentoPage({
               const meses = porMotorista.get(m.id) ?? mesesVazios;
               const totalMotorista = meses.reduce((acc, c) => acc + c.valor, 0);
               return (
-              <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+              <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 break-inside-avoid">
                 <td className="px-4 py-3">
                   <Link href={`/motoristas/${m.id}`} className="font-medium text-brand-600 hover:underline">
                     {m.nome}
@@ -173,7 +182,7 @@ export default async function FaturamentoPage({
                 <td className="px-4 py-3 text-right whitespace-nowrap font-medium text-slate-900">
                   {totalMotorista ? formatCurrency(totalMotorista) : "—"}
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3 text-right print:hidden">
                   {m.veiculo && (
                     <Link
                       href={`/faturamento/${m.veiculo.id}?motoristaId=${m.id}`}
@@ -206,7 +215,7 @@ export default async function FaturamentoPage({
                   </td>
                 ))}
                 <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(totalGeral)}</td>
-                <td></td>
+                <td className="print:hidden"></td>
               </tr>
             </tfoot>
           )}
