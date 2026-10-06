@@ -184,9 +184,25 @@ model Motorista {
 
   faturamentosMensais FaturamentoMensal[]
   multas     Multa[]
+  comissoes  ComissaoMotorista[]
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// Percentual de comissão do motorista a partir de um mês (vigência). Sem nenhum
+// registro vale o padrão de 12%; vale sempre o registro mais recente <= ao mês.
+model ComissaoMotorista {
+  id          String    @id @default(cuid())
+  motoristaId String
+  motorista   Motorista @relation(fields: [motoristaId], references: [id], onDelete: Cascade)
+  ano         Int
+  mes         Int // 1-12
+  percentual  Float // ex: 14 = 14%
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([motoristaId, ano, mes])
 }
 
 model FaturamentoMensal {

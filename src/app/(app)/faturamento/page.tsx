@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import SortableTh from "@/components/SortableTh";
 import BotaoImprimir from "@/components/BotaoImprimir";
+import { fatorComissao, percentualVigente } from "@/lib/comissao";
 import { parseSituacao, situacaoWhere } from "@/lib/situacao";
 
-const COMISSAO_PERCENTUAL = 0.12;
 const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 const SITUACAO_LABEL = { ativos: "Motoristas ativos", inativos: "Motoristas inativos", todos: "Todos os motoristas" } as const;
@@ -44,13 +44,13 @@ export default async function FaturamentoPage({
         }
       : {}),
     },
-    include: { veiculo: true },
+    include: { veiculo: true, comissoes: true },
     orderBy: getOrderBy(searchParams.sort, dir),
   });
 
   const comPlaca = motoristas.filter((m) => m.veiculo).length;
 
-  // Comissão (12% da base) + diárias de cada motorista, mês a mês. Um motorista
+  // Comissão (% do motorista sobre a base) + diárias de cada motorista, mês a mês. Um motorista
   // pode ter registros em mais de um veículo no mesmo mês, então soma-se tudo.
   const faturamentos = await prisma.faturamentoMensal.findMany({
     where: { ano, motoristaId: { in: motoristas.map((m) => m.id) } },
@@ -64,6 +64,7 @@ export default async function FaturamentoPage({
   });
 
   type Celula = { valor: number; veiculoId: string | null };
+  const comissoesPorMotorista = new Map(motoristas.map((m) => [m.id, m.comissoes]));
   const porMotorista = new Map<string, Celula[]>();
   for (const f of faturamentos) {
     if (!f.motoristaId) continue;
@@ -71,7 +72,7 @@ export default async function FaturamentoPage({
     const base = f.lancamentos.reduce((acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)), 0);
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
     const cel = meses[f.mes - 1];
-    cel.valor += base * COMISSAO_PERCENTUAL + diarias;
+    cel.valor += base * fatorComissao(percentualVigente(comissoesPorMotorista.get(f.motoristaId), ano, f.mes)) + diarias;
     cel.veiculoId = cel.veiculoId ?? f.veiculoId;
     porMotorista.set(f.motoristaId, meses);
   }

@@ -5,6 +5,7 @@ import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import { getStatusList } from "@/lib/settings";
 import PieChart, { PIE_PALETTE, corNomeParaHex } from "@/components/PieChart";
 import SortableTh from "@/components/SortableTh";
+import { fatorComissao, percentualVigente } from "@/lib/comissao";
 import AdSdTable, { type CteLinha } from "@/components/AdSdTable";
 
 const FROTA_ATIVA_WHERE = { status: { notIn: [...STATUS_VEICULO_OUTRO_MENU] as string[] } };
@@ -57,7 +58,6 @@ const MESES = [
   "Dezembro",
 ];
 
-const COMISSAO_PERCENTUAL = 0.12;
 
 export default async function DashboardPage({
   searchParams,
@@ -92,7 +92,7 @@ export default async function DashboardPage({
       prisma.veiculo.findMany({ where: FROTA_ATIVA_WHERE, select: { valor: true } }),
       prisma.faturamentoMensal.findMany({
         where: { ano, mes },
-        include: { veiculo: true, motorista: true, lancamentos: true, diarias: true },
+        include: { veiculo: true, motorista: { include: { comissoes: true } }, lancamentos: true, diarias: true },
       }),
       prisma.faturamentoMensal.findMany({
         where: { ano: anoAdSd, mes: mesAdSd },
@@ -116,7 +116,7 @@ export default async function DashboardPage({
       (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)),
       0
     );
-    const comissao = baseComissao * COMISSAO_PERCENTUAL;
+    const comissao = baseComissao * fatorComissao(percentualVigente(f.motorista?.comissoes, ano, mes));
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);
     const placas = placasUtilizadas(f.lancamentos, f.veiculo.placa);
     return { ...f, abastecimento, baseComissao, comissao, diarias, placas };

@@ -5,6 +5,7 @@ import { Plus, Save, FileSpreadsheet, FileText, Trash2, X } from "lucide-react";
 import { salvarFaturamento, type LancamentoInput, type DiariaInput } from "@/app/(app)/faturamento/actions";
 import { criarClienteRapido } from "@/app/(app)/faturamento/clientes/actions";
 import { formatCurrency } from "@/lib/format";
+import { fatorComissao, formatPercentual } from "@/lib/comissao";
 
 type LinhaEditavel = {
   data: string;
@@ -31,7 +32,6 @@ type DiariaEditavel = {
   valor: string;
 };
 
-const COMISSAO_PERCENTUAL = 0.12;
 
 function linhaVazia(placaPadrao: string): LinhaEditavel {
   return {
@@ -70,6 +70,7 @@ export default function FaturamentoEditor({
   placa,
   motoristaNome,
   motoristaId,
+  comissaoPercentual,
   lancamentosIniciais,
   diariasIniciais,
   clientes,
@@ -82,6 +83,7 @@ export default function FaturamentoEditor({
   placa: string;
   motoristaNome: string | null;
   motoristaId: string | null;
+  comissaoPercentual: number;
   lancamentosIniciais: {
     data: string | null;
     placa?: string | null;
@@ -195,7 +197,7 @@ export default function FaturamentoEditor({
         const seguro = num(l.seguro);
         const adm = num(l.adm);
         const base = vlrFrete - seguro - adm;
-        const comissao = base * COMISSAO_PERCENTUAL;
+        const comissao = base * fatorComissao(comissaoPercentual);
         return {
           vlrFrete,
           despesas: num(l.despesas),
@@ -209,7 +211,7 @@ export default function FaturamentoEditor({
           sd: num(l.sd),
         };
       }),
-    [linhas]
+    [linhas, comissaoPercentual]
   );
 
   const totais = useMemo(
@@ -249,7 +251,7 @@ export default function FaturamentoEditor({
     "Seguro",
     "ADM",
     "Base comissão",
-    "Comissão 12%",
+    `Comissão ${formatPercentual(comissaoPercentual)}%`,
     "AD",
     "Data Receb. AD",
     "SD",
@@ -499,7 +501,7 @@ export default function FaturamentoEditor({
               <th className="px-3 py-2 font-medium min-w-[100px]">Seguro</th>
               <th className="px-3 py-2 font-medium min-w-[90px]">ADM</th>
               <th className="px-3 py-2 font-medium min-w-[130px] text-slate-700">Base comissão</th>
-              <th className="px-3 py-2 font-medium min-w-[110px] text-slate-700">Comissão 12%</th>
+              <th className="px-3 py-2 font-medium min-w-[110px] text-slate-700">Comissão {formatPercentual(comissaoPercentual)}%</th>
               <th className="px-3 py-2 font-medium min-w-[100px] print:hidden">AD</th>
               <th className="px-3 py-2 font-medium min-w-[130px] print:hidden">Data receb. AD</th>
               <th className="px-3 py-2 font-medium min-w-[100px] print:hidden">SD</th>

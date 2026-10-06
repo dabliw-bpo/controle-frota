@@ -2,9 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { toCsv, csvResponse } from "@/lib/csv";
 import { placasUtilizadas } from "@/lib/format";
+import { fatorComissao, percentualVigente } from "@/lib/comissao";
 import { NextRequest } from "next/server";
 
-const COMISSAO_PERCENTUAL = 0.12;
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
           }
         : {}),
     },
-    include: { veiculo: true, motorista: true, lancamentos: true, diarias: true },
+    include: { veiculo: true, motorista: { include: { comissoes: true } }, lancamentos: true, diarias: true },
   });
 
   const linhas = faturamentos.map((f) => {
     const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
     const comissao = f.lancamentos.reduce(
-      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
+      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * fatorComissao(percentualVigente(f.motorista?.comissoes, ano, mes)),
       0
     );
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);

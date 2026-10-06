@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency, placasUtilizadas } from "@/lib/format";
 import RelatorioAcoes from "@/components/RelatorioAcoes";
 import SortableTh from "@/components/SortableTh";
+import { fatorComissao, percentualVigente } from "@/lib/comissao";
 
 const MESES = [
   "Janeiro",
@@ -19,7 +20,6 @@ const MESES = [
   "Dezembro",
 ];
 
-const COMISSAO_PERCENTUAL = 0.12;
 
 const SORT_FIELDS = ["placa", "motorista", "frete", "comissao", "diarias", "total"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -72,13 +72,13 @@ export default async function RelatorioFaturamentoPage({
           }
         : {}),
     },
-    include: { veiculo: true, motorista: true, lancamentos: true, diarias: true },
+    include: { veiculo: true, motorista: { include: { comissoes: true } }, lancamentos: true, diarias: true },
   });
 
   const linhasBrutas = faturamentos.map((f) => {
     const frete = f.lancamentos.reduce((acc, l) => acc + (l.vlrFrete ?? 0), 0);
     const comissao = f.lancamentos.reduce(
-      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * COMISSAO_PERCENTUAL,
+      (acc, l) => acc + ((l.vlrFrete ?? 0) - (l.seguro ?? 0) - (l.adm ?? 0)) * fatorComissao(percentualVigente(f.motorista?.comissoes, ano, mes)),
       0
     );
     const diarias = f.diarias.reduce((acc, d) => acc + (d.valor ?? 0), 0);

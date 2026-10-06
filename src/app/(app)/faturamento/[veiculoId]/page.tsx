@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import FaturamentoEditor from "@/components/FaturamentoEditor";
+import { percentualVigente } from "@/lib/comissao";
 
 const MESES = [
   "Janeiro",
@@ -28,7 +29,7 @@ export default async function FaturamentoVeiculoPage({
   const [veiculo, clientes, veiculosCavalo] = await Promise.all([
     prisma.veiculo.findUnique({
       where: { id: params.veiculoId },
-      include: { motoristasCadastrados: { where: { ativo: true } } },
+      include: { motoristasCadastrados: { where: { ativo: true }, include: { comissoes: true } } },
     }),
     prisma.cliente.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
     prisma.veiculo.findMany({
@@ -49,7 +50,7 @@ export default async function FaturamentoVeiculoPage({
   // já que cada motorista tem seu próprio registro mesmo quando a placa é
   // compartilhada por mais de um (senão o faturamento de um vaza para o outro).
   const motoristaEscolhido = searchParams.motoristaId
-    ? await prisma.motorista.findUnique({ where: { id: searchParams.motoristaId } })
+    ? await prisma.motorista.findUnique({ where: { id: searchParams.motoristaId }, include: { comissoes: true } })
     : null;
 
   const motoristaEfetivo = motoristaEscolhido ?? veiculo.motoristasCadastrados[0] ?? null;
@@ -125,6 +126,7 @@ export default async function FaturamentoVeiculoPage({
         placa={veiculo.placa}
         motoristaNome={motoristaEfetivo?.nome ?? null}
         motoristaId={motoristaEfetivo?.id ?? null}
+        comissaoPercentual={percentualVigente(motoristaEfetivo?.comissoes, ano, mes)}
         lancamentosIniciais={mensal?.lancamentos ?? []}
         diariasIniciais={mensal?.diarias ?? []}
         clientes={clientes}

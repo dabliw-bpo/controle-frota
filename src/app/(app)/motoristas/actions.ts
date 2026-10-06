@@ -88,6 +88,33 @@ export async function definirAtivoMotorista(motoristaId: string, ativo: boolean)
   revalidatePath("/faturamento");
 }
 
+export async function definirComissaoMotorista(motoristaId: string, formData: FormData) {
+  await requireEditor();
+  const percentual = parseFloat(String(formData.get("percentual") ?? "").replace(",", "."));
+  const mes = Number(formData.get("mes"));
+  const ano = Number(formData.get("ano"));
+  if (Number.isNaN(percentual) || percentual < 0 || percentual > 100) throw new Error("Comissão deve estar entre 0 e 100%.");
+  if (!Number.isInteger(mes) || mes < 1 || mes > 12 || !Number.isInteger(ano) || ano < 2000 || ano > 2100) {
+    throw new Error("Informe um mês e ano válidos.");
+  }
+  await prisma.comissaoMotorista.upsert({
+    where: { motoristaId_ano_mes: { motoristaId, ano, mes } },
+    create: { motoristaId, ano, mes, percentual },
+    update: { percentual },
+  });
+  revalidatePath(`/motoristas/${motoristaId}`);
+  revalidatePath("/faturamento");
+  revalidatePath("/dashboard");
+}
+
+export async function removerComissaoMotorista(motoristaId: string, comissaoId: string) {
+  await requireEditor();
+  await prisma.comissaoMotorista.deleteMany({ where: { id: comissaoId, motoristaId } });
+  revalidatePath(`/motoristas/${motoristaId}`);
+  revalidatePath("/faturamento");
+  revalidatePath("/dashboard");
+}
+
 export async function excluirMotorista(motoristaId: string) {
   await requireEditor();
   await prisma.motorista.delete({ where: { id: motoristaId } });
